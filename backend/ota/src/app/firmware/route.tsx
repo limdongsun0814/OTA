@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import executeQuery from "../_lib/db";
+import MqttPublish from "../_lib/uploadMqtt";
 import { v4 as uuidv4 } from "uuid";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public/upload");
@@ -25,6 +26,8 @@ export async function POST(request: Request) {
         executeQuery("insert into upload_firmware ( file_name )value( ? )", [
           id + file.name,
         ]);
+        const result = MqttPublish("test", buffer);
+        console.log(buffer[buffer.length - 1], "result2");
         messge = "파일 및 데이터가 성공적으로 업로드되었습니다.";
         status = 200;
       } else {

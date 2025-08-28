@@ -10,6 +10,7 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "mqtt": "^5.14.0",
     "mysql2": "^3.14.3",
     "next": "15.5.0",
     "react": "19.1.0",
