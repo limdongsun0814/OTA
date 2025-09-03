@@ -20,6 +20,9 @@
     "xlocbuf": "cpp",
     "cstddef": "cpp",
     "xlocale": "cpp",
-    "ostream": "cpp"
+    "ostream": "cpp",
+    "set": "cpp",
+    "queue": "cpp",
+    "utility": "cpp"
   }
 }

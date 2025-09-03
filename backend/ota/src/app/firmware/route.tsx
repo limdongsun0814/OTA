@@ -22,7 +22,7 @@ export async function POST(request: Request) {
         await fs.mkdir(UPLOAD_DIR, { recursive: true });
         const filePath = path.join(UPLOAD_DIR, id + file.name);
         console.log(filePath);
-        await fs.writeFile(filePath, buffer);
+        // await fs.writeFile(filePath, buffer);
         executeQuery("insert into upload_firmware ( file_name )value( ? )", [
           id + file.name,
         ]);
