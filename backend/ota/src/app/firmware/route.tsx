@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import executeQuery from "../_lib/db";
-import MqttPublish from "../_lib/uploadMqtt";
+import MqttPublish, { uploadTopic, UPLOAD_DIR } from "../_lib/uploadMqtt";
+import uploadFirmware from "../_lib/uploadFirmware";
 import { v4 as uuidv4 } from "uuid";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public/upload");
 export async function POST(request: Request) {
   try {
     const data = await request.formData();
@@ -22,12 +22,21 @@ export async function POST(request: Request) {
         await fs.mkdir(UPLOAD_DIR, { recursive: true });
         const filePath = path.join(UPLOAD_DIR, id + file.name);
         console.log(filePath);
-        // await fs.writeFile(filePath, buffer);
         executeQuery("insert into upload_firmware ( file_name )value( ? )", [
           id + file.name,
         ]);
-        const result = MqttPublish("test", buffer);
         console.log(buffer[buffer.length - 1], "result2");
+        await fs.writeFile(filePath, buffer);
+        if (now) {
+          const addresses = await executeQuery("select ip from mcu");
+          let addressList = [];
+          for (const index in addresses[0]) {
+            addressList.push(addresses[0][index].ip);
+          }
+          console.log(addressList);
+          uploadFirmware(filePath, addressList);
+        }
+        // MqttPublish(uploadTopic, id + file.name);
         messge = "파일 및 데이터가 성공적으로 업로드되었습니다.";
         status = 200;
       } else {
