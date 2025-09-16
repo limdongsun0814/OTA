@@ -5,10 +5,10 @@ export async function POST(request: Request) {
   const data = await request.json();
   const { chipId, ip } = data;
   console.log(chipId, ip);
-  executeQuery(
-    "insert into mcu ( chip_id, ip )value( ?,? ) on duplicate key update ip = ip",
-    [chipId, ip]
-  );
+  executeQuery("update mcu set ip = ? , status = 'start' where chip_id = ? ", [
+    ip,
+    chipId,
+  ]);
 
   return NextResponse.json({ send: "ok" });
 }
