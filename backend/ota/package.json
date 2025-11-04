@@ -2,20 +2,26 @@
   "name": "ota",
   "version": "0.1.0",
   "private": true,
+  "__asdasd": "next start",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "concurrently \"next dev --turbopack\" \"node socket-server.js\"",
+    "dev1": "next dev --turbopack",
+    "dev:socket-server": "node socket-server.js",
     "build": "next build --turbopack",
-    "start": "next start",
+    "start": "mext start",
     "lint": "biome check",
     "format": "biome format --write"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "mqtt": "^5.14.0",
     "mysql2": "^3.14.3",
     "next": "15.5.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "seedrandom": "^3.0.5",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
@@ -24,6 +30,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

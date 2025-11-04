@@ -13,9 +13,9 @@ interface RouteParams {
 export async function GET(request: Request, { params }: RouteParams) {
   const { chipId, fileName } = await params;
   console.log(chipId, fileName);
-  const address = await executeQuery("select ip from mcu where chip_id = ?", [
+  const chip = await executeQuery("select chip_id from mcu where chip_id = ?", [
     chipId,
   ]);
-  uploadFirmware(UPLOAD_DIR + "/" + fileName, [address[0][0].ip]);
+  uploadFirmware(UPLOAD_DIR + "/" + fileName, [chip[0][0].chip_id]);
   return NextResponse.json({ send: "ok" });
 }

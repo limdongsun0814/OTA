@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import executeQuery from "../_lib/db";
+import { io } from "socket.io-client";
 
 export async function POST(request: Request) {
   const data = await request.json();
@@ -9,6 +10,12 @@ export async function POST(request: Request) {
     ip,
     chipId,
   ]);
+
+  const socketHostname = process.env.SOCKET_HOSTNAME;
+  const socketPort = process.env.SOCKET_PORT;
+  const socket = io(`http://${socketHostname}:${socketPort}`);
+  socket.emit("status", { [chipId]: "start" });
+  socket.emit("ip", { [chipId]: ip });
 
   return NextResponse.json({ send: "ok" });
 }
