@@ -1,22 +1,42 @@
 import mqtt from "mqtt";
 import crypto from "crypto";
 import path from "path";
+import fs from "fs/promises";
 
 const seedrandom = require("seedrandom");
 const mqttClient = mqtt.connect(process.env.MQTT_BROKER || "");
 
-async function MqttPublish(topic: string, fileName: string) {
+async function MqttPublish(topic: string, fileName: string, chipIds: string[]) {
   console.log("data: ", fileName);
-  if (mqttClient && mqttClient.connected) {
-    console.log(
-      seedrandom(),
-      crypto.createHash("sha256").update(fileName).digest("hex")
-    );
+  const fileBuffer = await fs.readFile(fileName);
+  const uint8Array = new Uint8Array(fileBuffer);
+  // const base64 = Buffer.from(uint8Array).toString("base64");
 
-    mqttClient.publish(topic, JSON.stringify({ fileName: fileName }), {
-      qos: 2,
-    });
-  }
+  let chunkSize = 1000;
+  let chunkCnt = Math.ceil(uint8Array.length / chunkSize);
+  let status =
+    chunkCnt + "," + chunkSize + "," + fileName + "," + uint8Array.length;
+  console.log(uint8Array.length, uint8Array.length, chunkCnt);
+  chipIds.forEach((val) => (status += "," + val));
+  status += ",";
+  mqttClient.publish(topic, status, { qos: 2 });
+
+  // for (let i = 0; i <= base64.length; i = i + chunkSize) {
+  //   mqttClient.publish(topic, base64.substring(i, i + chunkSize) + `(${i})`, {
+  //     qos: 2,
+  //   });
+  // }
+
+  // if (mqttClient && mqttClient.connected) {
+  //   console.log(
+  //     seedrandom(),
+  //     crypto.createHash("sha256").update(fileName).digest("hex")
+  //   );
+
+  //   mqttClient.publish(topic, JSON.stringify({ fileName: fileName }), {
+  //     qos: 2,
+  //   });
+  // }
   return false;
 }
 

@@ -24,7 +24,12 @@ export async function PUT(request: Request) {
     uploadFirmwareData[data[val]["upload firmware"]].push(data[val]["chip id"]);
   }
   for (let fileName in uploadFirmwareData) {
-    uploadFirmware(UPLOAD_DIR + "/" + fileName, uploadFirmwareData[fileName]);
+    // uploadFirmware(UPLOAD_DIR + "/" + fileName, uploadFirmwareData[fileName]);
+    MqttPublish(
+      "status",
+      UPLOAD_DIR + "/" + fileName,
+      uploadFirmwareData[fileName]
+    );
   }
   // uploadFirmware(UPLOAD_DIR + "/" + fileName, [chip[0][0].chip_id]);
   return NextResponse.json(resData);
