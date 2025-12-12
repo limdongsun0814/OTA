@@ -2,15 +2,29 @@ import mqtt from "mqtt";
 import crypto from "crypto";
 import path from "path";
 import fs from "fs/promises";
+import executeQuery from "./db";
+import { io } from "socket.io-client";
 
 const seedrandom = require("seedrandom");
 const mqttClient = mqtt.connect(process.env.MQTT_BROKER || "");
 
 async function MqttPublish(topic: string, fileName: string, chipIds: string[]) {
-  console.log("data: ", fileName);
+  const socketHostname = process.env.SOCKET_HOSTNAME;
+  const socketPort = process.env.SOCKET_PORT;
+  const socket = io(`http://${socketHostname}:${socketPort}`);
   const fileBuffer = await fs.readFile(fileName);
   const uint8Array = new Uint8Array(fileBuffer);
   // const base64 = Buffer.from(uint8Array).toString("base64");
+
+  const socketData: { [key: string]: string } = {};
+  for (let index in chipIds) {
+    socketData[chipIds[index]] = "waiting";
+  }
+  executeQuery(
+    "update mcu set status = 'waiting' where chip_id in(?) ",
+    chipIds
+  );
+  socket.emit("status", socketData);
 
   let chunkSize = 1000;
   let chunkCnt = Math.ceil(uint8Array.length / chunkSize);
