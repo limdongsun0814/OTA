@@ -18,13 +18,14 @@ OTAClass::~OTAClass(){
 
 }
 
-void OTAClass::begin(const char* ssid, const char* password,String url,const char* mqttUrl,int mqttPort){
+void OTAClass::begin(const char* ssid, const char* password,String url,const char* mqttUrl,int mqttPort,const uint8_t* key){
     this->ssid = ssid;
     this->password = password;
     OTAClass::WiFiConnect(this->ssid,this->password);
     OTAClass::initMCU(url);
     this->client.setServer(mqttUrl,mqttPort);
-    // this->client.setBufferSize(1024);
+    this->client.setBufferSize(1200);
+    this->secretKey=key;
     this->client.setCallback([this](char* topic, byte* payload, unsigned int length) {
         OTAClass::mqttCallback(topic,payload,length);
     });
@@ -173,7 +174,7 @@ void OTAClass::reconnect(){
       this->_debugPort->println("연결 성공!");
       
       this->client.subscribe(String(this->chipId).c_str());
-      this->client.subscribe("status");
+      this->client.subscribe((String(this->chipId)+"status").c_str());
       this->_debugPort->print("토픽 '");
       this->_debugPort->print(String(this->chipId).c_str());
       this->_debugPort->println("' 구독 완료.");
@@ -190,43 +191,55 @@ void OTAClass::reconnect(){
 void OTAClass::mqttCallback(char* topic, byte* payload, unsigned int length){
     this->_debugPort->print("메시지 도착 [");
     this->_debugPort->print(topic);
-    this->_debugPort->print("] ");
-    if(strcmp(topic,"status") == 0){
-        int dataNum = 0;
-        String dataStr = "";
-        int cnt = 0;
-        for (int i = 0; i < length; i++) {
-            if(payload[i]!=','){
-                if(cnt==2){
-                    dataStr+=(char)payload[i];
-                    if(payload[i]=='\\'){
-                        dataStr+=(char)payload[i];
-                    }
-                }else{
-                    dataNum=dataNum*10 + (char)payload[i] - '0';
-                }
-            }else{
-                if(cnt==0){
-                    this->chunkMax=dataNum;
-                }else if(cnt==1){
-                    this->chunkSize=dataNum;
-                }else if(cnt==2){
-                    this->fileName=dataStr;
-                }else if(cnt==3){
-                    this->contentLength=dataNum;
-                }else if(chipId==dataNum){
-                    // 데이터 + 토픽 + 오버해드 
-                    this->client.setBufferSize(this->chunkSize+30);
-                    this->chunkIndex=0;
-                    OTAClass::mqttOTAPublish();
-                }
-                cnt++;
-                dataNum = 0;
-            }
+    this->_debugPort->println("] ");
+    if(strcmp(topic,(String(this->chipId)+"status").c_str())==0){
+        memcpy(this->digest,payload,32);
+        this->chunkMax = 0;
+        this->chunkIndex=0;
+        for(int i = 32; i < length; i++){
+            this->chunkMax = this->chunkMax<<8 | payload[i];
         }
-    this->_debugPort->println();
+
+        if(this->_debugPort!=nullptr){
+            this->_debugPort->print("digest: ");
+            for(int i=0; i < sizeof(this->digest);i++){
+                this->_debugPort->print(this->digest[i],HEX);
+            }
+            this->_debugPort->println();
+
+            this->_debugPort->printf("chunkMax: %d \n",this->chunkMax);
+        }
+        
+        OTAClass::mqttOTAPublish(); 
+
     }else if(strcmp(topic,String(this->chipId).c_str()) == 0){
-        OTAClass::mqttUpdate(payload,length);
+        memcpy(this->iv,payload,16);
+        byte fileData[length-16];
+        memcpy(fileData,payload+16,length-16);
+
+        if(this->_debugPort!=nullptr){
+            this->_debugPort->print("변환 전 내용: ");
+            for (int i = 0; i < length-16; i++) {
+                this->_debugPort->printf("%d ", fileData[i]);
+            }
+            this->_debugPort->printf("\n");
+
+            this->_debugPort->print("iv: ");
+            for (int i = 0; i < 16; i++) {
+                this->_debugPort->print( this->iv[i],HEX);
+            }
+            this->_debugPort->printf("\n");
+        }
+
+        OTAClass::decrypt(fileData,length,this->secretKey,this->iv);
+        if(this->_debugPort!=nullptr){
+            this->_debugPort->print("변환 후 내용: ");
+            for (size_t i = 0; i < length; i++) {
+                this->_debugPort->printf("%d ", fileData[i]);
+            }
+            this->_debugPort->printf("\n");
+        }
+        // OTAClass::mqttUpdate(payload,length);
         if(this->chunkIndex!=this->chunkMax){
             OTAClass::mqttOTAPublish(); 
         }
@@ -268,10 +281,19 @@ void OTAClass::mqttUpdate(byte* payload,unsigned int length){
     }
 }
 void OTAClass::mqttOTAPublish(){
+
+    // const secret = SecretMap.getInstance(chunkObj.chipId);
+    // secret.chunkIndex = chunkObj.chunkIndex;
+
     String chipIdStr = String(this->chipId);
     String chunkSizeStr = String(this->chunkSize);
     String chunkMaxStr = String(this->chunkMax);
-    String payload_str = "{\"chipId\":\""+chipIdStr+"\",\"chunkSize\":"+chunkSizeStr+",\"chunkMax\":"+chunkMaxStr+",\"chunkIndex\":"+String(chunkIndex)+",\"fileName\":\""+this->fileName+"\"}";
+    // base64Encode(this->iv,this->ivToBase64,25,sizeof(this->iv));
+    String payload_str = "{\"chipId\":\""+chipIdStr+"\""+","+"\"chunkIndex\":"+String(chunkIndex)+"}";
+    // String payload_str = "{\"chipId\":\""+chipIdStr+"\",\"chunkSize\":"+chunkSizeStr+",\"chunkMax\":"+chunkMaxStr+",\"iv\":"+"\""+this->ivToBase64+"\""+",\"chunkIndex\":"+String(chunkIndex)+",\"fileName\":\""+this->fileName+"\"}";
+    if(this->_debugPort!=nullptr){
+        this->_debugPort->println(payload_str);
+    }
     this->client.publish("backend", payload_str.c_str());
     this->chunkIndex++;
 }
@@ -285,4 +307,46 @@ void OTAClass::addRouterSetup(){
 void OTAClass::setupDebug(Print* debugPort){
     this->_debugPort = debugPort;
     this->_debugPort->println("Debug mode Start");
+}
+
+void OTAClass::setupHash(){
+    this->hash.reset();
+}
+void OTAClass::hashKey(byte* payload){
+    this->hash.update(payload,sizeof(payload));
+}
+
+bool OTAClass::checkHashKey(String input){
+    uint8_t digest[32];
+    this->hash.finalize(digest,32);
+
+    String hashStr;
+    hashStr.reserve(64);
+
+    for (int i = 0; i < 32; i++) {
+        if (digest[i] < 0x10){
+            hashStr += '0';
+        }
+        hashStr += String(digest[i], HEX);
+    }
+
+    if(hashStr==input){
+        return true;
+    }
+    return false;
+}
+
+unsigned int OTAClass::pkcs7Unpad(byte* buf,unsigned int len){
+    byte pad = buf[len-1];
+    if (pad == 0 || pad > 16) {
+        return len;
+    }
+    return len - pad;
+}
+
+void OTAClass::decrypt(byte* data,unsigned int len, const uint8_t* key, uint8_t* iv){
+    br_aes_ct_cbcdec_keys dec;
+    br_aes_ct_cbcdec_init(&dec, key, 16);
+    br_aes_ct_cbcdec_run(&dec, iv, data, len);
+    // OTAClass::pkcs7Unpad(data,);
 }

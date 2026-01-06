@@ -38,6 +38,7 @@ export async function createCsrfToken(req: Request) {
     session.csrfToken = crypto.randomBytes(16).toString("hex");
     await session.save();
   }
+  console.log("csrfToken: ", session.csrfToken);
   return session.csrfToken;
 }
 

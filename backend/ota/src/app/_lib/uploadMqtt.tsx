@@ -1,5 +1,5 @@
 import mqtt from "mqtt";
-import crypto from "crypto";
+import crypto, { randomBytes } from "crypto";
 import path from "path";
 import fs from "fs/promises";
 import executeQuery from "./db";
@@ -7,6 +7,12 @@ import { io } from "socket.io-client";
 
 const seedrandom = require("seedrandom");
 const mqttClient = mqtt.connect(process.env.MQTT_BROKER || "");
+type statusType = {
+  chunkCnt: number;
+  chunkSize: number;
+  fileName: string;
+  chipIds: string[];
+};
 
 async function MqttPublish(topic: string, fileName: string, chipIds: string[]) {
   const socketHostname = process.env.SOCKET_HOSTNAME;
@@ -14,6 +20,9 @@ async function MqttPublish(topic: string, fileName: string, chipIds: string[]) {
   const socket = io(`http://${socketHostname}:${socketPort}`);
   const fileBuffer = await fs.readFile(fileName);
   const uint8Array = new Uint8Array(fileBuffer);
+  const digest = crypto.createHash("sha256").update(uint8Array).digest("hex");
+  const iv = randomBytes(16);
+  const ivToBase64 = Buffer.from(iv).toString("base64");
   // const base64 = Buffer.from(uint8Array).toString("base64");
 
   const socketData: { [key: string]: string } = {};
@@ -28,12 +37,30 @@ async function MqttPublish(topic: string, fileName: string, chipIds: string[]) {
 
   let chunkSize = 1000;
   let chunkCnt = Math.ceil(uint8Array.length / chunkSize);
-  let status =
-    chunkCnt + "," + chunkSize + "," + fileName + "," + uint8Array.length;
-  console.log(uint8Array.length, uint8Array.length, chunkCnt);
-  chipIds.forEach((val) => (status += "," + val));
-  status += ",";
-  mqttClient.publish(topic, status, { qos: 2 });
+  const status: statusType = {
+    chunkCnt: chunkCnt,
+    chunkSize: chunkSize,
+    fileName: fileName,
+    chipIds: chipIds,
+  };
+  // let status =
+  //   chunkCnt +
+  //   "," +
+  //   chunkSize +
+  //   "," +
+  //   fileName +
+  //   "," +
+  //   uint8Array.length +
+  //   "," +
+  //   digest +
+  //   "," +
+  //   ivToBase64 +
+  //   ",";
+  console.log(uint8Array.length, uint8Array.length, chunkCnt, digest);
+  console.log(status);
+  // chipIds.forEach((val) => (status += "," + val));
+  // status += ",";
+  mqttClient.publish(topic, JSON.stringify(status), { qos: 2 });
 
   // for (let i = 0; i <= base64.length; i = i + chunkSize) {
   //   mqttClient.publish(topic, base64.substring(i, i + chunkSize) + `(${i})`, {
