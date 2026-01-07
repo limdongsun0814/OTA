@@ -56,8 +56,9 @@ class SecretMap {
   static secretMap = new Map();
   static getInstance(chipId, data) {
     //iv, key, chunkCnt, chunkSize
+
+    const iv = crypto.randomBytes(16);
     if (!this.secretMap.has(chipId)) {
-      const iv = crypto.randomBytes(16);
       this.secretMap.set(
         chipId,
         new Secret(
@@ -66,6 +67,7 @@ class SecretMap {
           data.chunkCnt,
           data.chunkSize,
           data.fileName,
+          data.fileSize,
           chipId
         )
       );
@@ -75,12 +77,13 @@ class SecretMap {
 }
 
 class Secret {
-  constructor(iv, key, chunkCnt, chunkSize, fileName, chipId) {
+  constructor(iv, key, chunkCnt, chunkSize, fileName, fileSize, chipId) {
     this.iv = iv;
     this.key = key;
     this.chunkMax = chunkCnt;
     this.chunkSize = chunkSize;
     this.fileName = fileName;
+    this.fileSize = fileSize;
     this.chipId = chipId;
     this.chunkIndex = 0;
   }
@@ -145,13 +148,13 @@ async function executeQuery(query, values) {
   return pool.query(query, values);
 }
 
-function fileCrypto(fileBuffer, iv, key) {
-  console.log(iv, "iv");
-  console.log(key, "key");
-  const cipher = crypto.createCipheriv("aes-128-cbc", key, iv);
+function fileCrypto(fileBuffer, secret, key) {
+  secret.iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv("aes-128-cbc", key, secret.iv);
   let encrypted = cipher.update(fileBuffer);
   encrypted = Buffer.concat([encrypted, cipher.final()]);
-  console.log(iv, "iviviviv");
+  console.log(key, "key");
+  console.log(secret.iv, "iv");
   return new Uint8Array(encrypted);
 }
 function base64ToHex(input) {
@@ -169,9 +172,8 @@ async function mqttPub(secret) {
   console.log(fileUint8Array.length);
   console.log(fileUint8Array, "file Data");
 
-  const encrypted = fileCrypto(fileUint8Array, secret.iv, aesKeyHex);
+  const encrypted = fileCrypto(fileUint8Array, secret, aesKeyHex);
   const transfer = Buffer.concat([secret.iv, encrypted]);
-  console.log(encrypted, encrypted.length, "file encrypted");
   console.log(transfer, transfer.length, "file encrypted");
   mqttClient.publish(secret.chipId, transfer, (err) => {
     if (secret.chunkIndex == secret.chunkMax - 1) {
@@ -192,9 +194,9 @@ async function mqttPub(secret) {
 async function mqttPubInit(chipId, secret) {
   const filesInstance = await Files.getInstance(secret.fileName);
   // sha256 + chunkSize
-  const buf = Buffer.alloc(2);
-  buf.writeUInt16BE(secret.chunkMax);
-  console.log(typeof secret.chunkSize, buf);
+  const buf = Buffer.alloc(4);
+  console.log(secret.fileSize);
+  buf.writeUInt32BE(secret.fileSize);
   const transfer = Buffer.concat([
     Buffer.from(filesInstance.digest, "hex"),
     buf,

@@ -114,16 +114,10 @@ void OTAClass::handleUpdate(){
     this->shouldRestart =false;
 
     if (upload.status == UPLOAD_FILE_START) { 
-        if(this->_debugPort!=nullptr){
-            this->_debugPort->printf("업데이트 시작: %s %u (총 %u 바이트)\n", upload.filename.c_str(),upload.totalSize, upload.contentLength);
-        }
         if (!Update.begin(upload.contentLength)) { 
             Update.printError(Serial);
             responseMessage = "업데이트 시작 실패!";
             responseStatus = "error";
-            if(this->_debugPort!=nullptr){
-                this->_debugPort->printf("업데이트 시작 : %s %u %u%%(총 %u 바이트)\n", upload.filename.c_str(),upload.totalSize,100*upload.totalSize/upload.contentLength, upload.contentLength);
-            }
         }
     } else if (upload.status == UPLOAD_FILE_WRITE) { 
         if(this->_debugPort!=nullptr){
@@ -194,20 +188,30 @@ void OTAClass::mqttCallback(char* topic, byte* payload, unsigned int length){
     this->_debugPort->println("] ");
     if(strcmp(topic,(String(this->chipId)+"status").c_str())==0){
         memcpy(this->digest,payload,32);
-        this->chunkMax = 0;
         this->chunkIndex=0;
+        this->contentLength = 0;
         for(int i = 32; i < length; i++){
-            this->chunkMax = this->chunkMax<<8 | payload[i];
+            this->contentLength = this->contentLength<<8 | payload[i];
         }
+        this->chunkMax = std::ceil((double)this->contentLength / this->chunkSize);
 
         if(this->_debugPort!=nullptr){
-            this->_debugPort->print("digest: ");
-            for(int i=0; i < sizeof(this->digest);i++){
-                this->_debugPort->print(this->digest[i],HEX);
-            }
-            this->_debugPort->println();
+            /*
+                this->_debugPort->print("digest: ");
+                for(int i=0; i < sizeof(this->digest);i++){
+                    this->_debugPort->print(this->digest[i],HEX);
+                }
+                this->_debugPort->println();
 
-            this->_debugPort->printf("chunkMax: %d \n",this->chunkMax);
+                this->_debugPort->print("payload: ");
+                for(int i=0; i < sizeof(payload);i++){
+                    this->_debugPort->print(payload[i],HEX);
+                }
+                this->_debugPort->println();
+
+                this->_debugPort->printf("chunkMax: %d \n",this->chunkMax);
+            */
+            this->_debugPort->printf("contentLength: %d \n",this->contentLength);
         }
         
         OTAClass::mqttOTAPublish(); 
@@ -216,49 +220,55 @@ void OTAClass::mqttCallback(char* topic, byte* payload, unsigned int length){
         memcpy(this->iv,payload,16);
         byte fileData[length-16];
         memcpy(fileData,payload+16,length-16);
+        /*
+            if(this->_debugPort!=nullptr){
+                this->_debugPort->print("변환 전 내용: ");
+                for (int i = 0; i < length-16; i++) {
+                    this->_debugPort->printf("%d ", fileData[i]);
+                }
+                this->_debugPort->printf("\n");
 
-        if(this->_debugPort!=nullptr){
-            this->_debugPort->print("변환 전 내용: ");
-            for (int i = 0; i < length-16; i++) {
-                this->_debugPort->printf("%d ", fileData[i]);
+                this->_debugPort->print("iv: ");
+                for (int i = 0; i < 16; i++) {
+                    this->_debugPort->print( this->iv[i],HEX);
+                }
+                this->_debugPort->printf("\n");
             }
-            this->_debugPort->printf("\n");
-
-            this->_debugPort->print("iv: ");
-            for (int i = 0; i < 16; i++) {
-                this->_debugPort->print( this->iv[i],HEX);
-            }
-            this->_debugPort->printf("\n");
-        }
-
+        */
         OTAClass::decrypt(fileData,length,this->secretKey,this->iv);
-        if(this->_debugPort!=nullptr){
-            this->_debugPort->print("변환 후 내용: ");
-            for (size_t i = 0; i < length; i++) {
-                this->_debugPort->printf("%d ", fileData[i]);
+        length = OTAClass::pkcs7Unpad(fileData,length-16);
+
+        /*
+            if(this->_debugPort!=nullptr){
+                this->_debugPort->print("변환 후 내용: ");
+                for (size_t i = 0; i < length; i++) {
+                    this->_debugPort->printf("%d ", fileData[i]);
+                }
+                this->_debugPort->printf("\n");
             }
-            this->_debugPort->printf("\n");
+        */
+
+        bool checkHash = OTAClass::setHash(fileData,length);
+        if(checkHash){
+            OTAClass::mqttUpdate(fileData,length,checkHash);
         }
-        // OTAClass::mqttUpdate(payload,length);
+
         if(this->chunkIndex!=this->chunkMax){
             OTAClass::mqttOTAPublish(); 
         }
     }
 }
 
-void OTAClass::mqttUpdate(byte* payload,unsigned int length){
+void OTAClass::mqttUpdate(byte* payload,unsigned int length,bool checkHash){
     if(this->chunkIndex==1){
         if (!Update.begin(this->contentLength)) { 
             Update.printError(Serial);
             responseMessage = "업데이트 시작 실패!";
             responseStatus = "error";
-            if(this->_debugPort!=nullptr){
-                this->_debugPort->printf("업데이트 시작 : %s %u %u%%(총 %u 바이트)\n", this->fileName.c_str(),length,100*this->chunkIndex*this->chunkSize/this->contentLength, this->contentLength);
-            }
         }
     }
     if(this->_debugPort!=nullptr){
-        this->_debugPort->printf("업데이트 중 : %s %u %u%%(총 %u 바이트)\n", this->fileName.c_str(),length,100*this->chunkIndex*this->chunkSize/this->contentLength, this->contentLength);
+        this->_debugPort->printf("업데이트 중 : %u %u%%(총 %u 바이트)\n", length,100*this->chunkIndex*this->chunkSize/this->contentLength, this->contentLength);
     }
     if (Update.write(payload, length) != length) { 
         if(this->_debugPort!=nullptr){
@@ -268,7 +278,7 @@ void OTAClass::mqttUpdate(byte* payload,unsigned int length){
     if(this->chunkIndex==this->chunkMax){
         if(Update.end(true)){
         if(this->_debugPort!=nullptr){
-            this->_debugPort->printf("업데이트 종료 : %s %u %u%%(총 %u 바이트)\n", this->fileName.c_str(),length,100*this->chunkIndex*this->chunkSize/this->contentLength, this->contentLength);
+            this->_debugPort->printf("업데이트 종료 : %u %u%%(총 %u 바이트)\n", length,100*this->chunkIndex*this->chunkSize/this->contentLength, this->contentLength);
         }
           delay(1000);
           ESP.restart();
@@ -280,18 +290,14 @@ void OTAClass::mqttUpdate(byte* payload,unsigned int length){
         }
     }
 }
-void OTAClass::mqttOTAPublish(){
 
-    // const secret = SecretMap.getInstance(chunkObj.chipId);
-    // secret.chunkIndex = chunkObj.chunkIndex;
+void OTAClass::mqttOTAPublish(){
 
     String chipIdStr = String(this->chipId);
     String chunkSizeStr = String(this->chunkSize);
     String chunkMaxStr = String(this->chunkMax);
-    // base64Encode(this->iv,this->ivToBase64,25,sizeof(this->iv));
     String payload_str = "{\"chipId\":\""+chipIdStr+"\""+","+"\"chunkIndex\":"+String(chunkIndex)+"}";
-    // String payload_str = "{\"chipId\":\""+chipIdStr+"\",\"chunkSize\":"+chunkSizeStr+",\"chunkMax\":"+chunkMaxStr+",\"iv\":"+"\""+this->ivToBase64+"\""+",\"chunkIndex\":"+String(chunkIndex)+",\"fileName\":\""+this->fileName+"\"}";
-    if(this->_debugPort!=nullptr){
+   if(this->_debugPort!=nullptr){
         this->_debugPort->println(payload_str);
     }
     this->client.publish("backend", payload_str.c_str());
@@ -310,31 +316,61 @@ void OTAClass::setupDebug(Print* debugPort){
 }
 
 void OTAClass::setupHash(){
-    this->hash.reset();
+    this->hash=SHA256();
 }
-void OTAClass::hashKey(byte* payload){
-    this->hash.update(payload,sizeof(payload));
+void OTAClass::hashKey(byte* payload,unsigned int length){
+    /*
+        if(this->_debugPort!=nullptr){
+            this->_debugPort->print("sha256 내용: ");
+            for (size_t i = 0; i < length; i++) {
+                this->_debugPort->printf("%d ", payload[i]);
+            }
+            this->_debugPort->printf("\n");
+        }
+    */
+    this->hash.update(payload,length);
 }
 
-bool OTAClass::checkHashKey(String input){
+bool OTAClass::checkHashKey(byte* input){
     uint8_t digest[32];
     this->hash.finalize(digest,32);
+    /*
+        if(this->_debugPort!=nullptr){
+            this->_debugPort->print("Hash 서버: ");
+            for(int i = 0; i<32; i++){
+                this->_debugPort->print(input[i]);
+                this->_debugPort->print(" ");
+            }
+            this->_debugPort->println();
 
-    String hashStr;
-    hashStr.reserve(64);
-
-    for (int i = 0; i < 32; i++) {
-        if (digest[i] < 0x10){
-            hashStr += '0';
+            this->_debugPort->print("Hash 계산: ");
+            for(int i = 0; i<32; i++){
+                this->_debugPort->print(digest[i]);
+                this->_debugPort->print(" ");
+            }
+            this->_debugPort->println();
         }
-        hashStr += String(digest[i], HEX);
-    }
-
-    if(hashStr==input){
+    */
+    if(memcmp(input,digest,32)==0){
         return true;
     }
+    
     return false;
 }
+
+bool OTAClass::setHash(byte* payload,unsigned int length){
+
+    if(this->chunkIndex==1){
+        OTAClass::setupHash();
+    }
+
+    OTAClass::hashKey(payload,length);
+
+    if(this->chunkMax==this->chunkIndex){
+        return OTAClass::checkHashKey(this->digest);
+    }
+    return true;
+}// false일 경우 리셋하는 로직 필요
 
 unsigned int OTAClass::pkcs7Unpad(byte* buf,unsigned int len){
     byte pad = buf[len-1];

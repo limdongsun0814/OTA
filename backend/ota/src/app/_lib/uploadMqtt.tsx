@@ -11,6 +11,7 @@ type statusType = {
   chunkCnt: number;
   chunkSize: number;
   fileName: string;
+  fileSize: number;
   chipIds: string[];
 };
 
@@ -40,6 +41,7 @@ async function MqttPublish(topic: string, fileName: string, chipIds: string[]) {
   const status: statusType = {
     chunkCnt: chunkCnt,
     chunkSize: chunkSize,
+    fileSize: uint8Array.length,
     fileName: fileName,
     chipIds: chipIds,
   };

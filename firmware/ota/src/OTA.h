@@ -36,7 +36,6 @@ class OTAClass{
         String fileName;
         String responseMessage;
         String responseStatus;
-        byte digest[32];
 
         OTAClass();
         OTAClass(uint16_t port);
@@ -53,7 +52,7 @@ class OTAClass{
         void handleNotFound();
         void handleClient(); 
         void mqttCallback(char* topic, byte* payload, unsigned int length);
-        void mqttUpdate(byte* payload,unsigned int length);
+        void mqttUpdate(byte* payload,unsigned int length,bool checkHash);
         void mqttOTAPublish();
         void reconnect();
         
@@ -63,10 +62,12 @@ class OTAClass{
         SHA256 hash;
         uint8_t iv[16];
         String ivToBase64;
+        byte digest[32];
         const uint8_t* secretKey;
-        void hashKey(byte* payload);
+        bool setHash(byte* payload,unsigned int length);
+        void hashKey(byte* payload,unsigned int length);
         void setupHash();
-        bool checkHashKey(String input);
+        bool checkHashKey(byte* input);
         unsigned int pkcs7Unpad(byte* buf,unsigned int len);
         void decrypt(byte* data,unsigned int len, const uint8_t* key, uint8_t* iv);
 
