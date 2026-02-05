@@ -41,6 +41,7 @@ mqttClient.on("connect", () => {
       }
       case "status": {
         const dataJson = JSON.parse(data);
+        console.log(dataJson);
         for (let chipId of dataJson.chipIds) {
           console.log(chipId);
           const secret = SecretMap.getInstance(chipId, dataJson);
@@ -68,8 +69,8 @@ class SecretMap {
           data.chunkSize,
           data.fileName,
           data.fileSize,
-          chipId
-        )
+          chipId,
+        ),
       );
     }
     return this.secretMap.get(chipId);
@@ -124,11 +125,11 @@ class File {
       chunkIndex * chunkSize + chunkSize,
       chunkIndex == chunkMax - 1,
       this.usingInstance,
-      "aaaa"
+      "aaaa",
     );
     return this.fileUint8Array.subarray(
       chunkIndex * chunkSize,
-      chunkIndex * chunkSize + chunkSize
+      chunkIndex * chunkSize + chunkSize,
     );
   }
 }
@@ -167,7 +168,7 @@ async function mqttPub(secret) {
   const fileUint8Array = filesInstance.getFileUint8Array(
     secret.chunkIndex,
     secret.chunkSize,
-    secret.chunkMax
+    secret.chunkMax,
   );
   console.log(fileUint8Array.length);
   console.log(fileUint8Array, "file Data");
@@ -179,7 +180,7 @@ async function mqttPub(secret) {
     if (secret.chunkIndex == secret.chunkMax - 1) {
       executeQuery(
         "update mcu set status = 'restart' where chip_id in(?) ",
-        secret.chipId
+        secret.chipId,
       );
       socket.emit("status", { [secret.chipId]: "restart" });
     }
@@ -193,7 +194,7 @@ async function mqttPub(secret) {
 
 async function mqttPubInit(chipId, secret) {
   const filesInstance = await Files.getInstance(secret.fileName);
-  // sha256 + chunkSize
+  // sha256 + fileSize
   const buf = Buffer.alloc(4);
   console.log(secret.fileSize);
   buf.writeUInt32BE(secret.fileSize);
