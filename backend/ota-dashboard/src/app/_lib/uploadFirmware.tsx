@@ -1,12 +1,12 @@
 import { io } from "socket.io-client";
-import MqttPublish, { uploadTopic, UPLOAD_DIR } from "../_lib/uploadMqtt";
+import MqttPublish, { uploadTopic, UPLOAD_DIR } from "./uploadMqtt";
 import executeQuery from "./db";
 ("../_lib/db");
 import fs from "fs/promises";
 
 export default async function uploadFirmware(
   fileName: string,
-  chipIds: string[]
+  chipIds: string[],
 ) {
   const socketHostname = process.env.SOCKET_HOSTNAME;
   const socketPort = process.env.SOCKET_PORT;
@@ -24,11 +24,11 @@ export default async function uploadFirmware(
   console.log(socketData, "socketData");
   const addresses = await executeQuery(
     `select ip, chip_id from mcu where chip_id in(?)`,
-    chipIds
+    chipIds,
   );
   executeQuery(
     "update mcu set status = 'waiting' where chip_id in(?) ",
-    chipIds
+    chipIds,
   );
 
   socket.emit("status", socketData);
@@ -36,7 +36,7 @@ export default async function uploadFirmware(
     console.log(address.ip, "http://" + address.ip + "/update", fileBlob);
     executeQuery(
       "update mcu set status = 'uploading' where ip = ?",
-      address.ip
+      address.ip,
     );
     socket.emit("status", { [address.chip_id]: "uploading" });
     fetch("http://" + address.ip + "/update", {
@@ -58,7 +58,7 @@ export default async function uploadFirmware(
       .then((data) => {
         executeQuery(
           "update mcu set status = 'restart' where ip = ?",
-          address.ip
+          address.ip,
         );
         socket.emit("status", { [address.chip_id]: "restart" });
       })

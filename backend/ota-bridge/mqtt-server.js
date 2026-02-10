@@ -1,4 +1,5 @@
 require("dotenv").config();
+// 씻고 분기하자
 
 const mysql = require("mysql2/promise");
 const { io } = require("socket.io-client");
@@ -56,8 +57,6 @@ mqttClient.on("connect", () => {
 class SecretMap {
   static secretMap = new Map();
   static getInstance(chipId, data) {
-    //iv, key, chunkCnt, chunkSize
-
     const iv = crypto.randomBytes(16);
     if (!this.secretMap.has(chipId)) {
       this.secretMap.set(
@@ -133,7 +132,7 @@ class File {
     );
   }
 }
-
+// 완
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -141,7 +140,7 @@ const pool = mysql.createPool({
   database: process.env.DB,
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
 });
-
+// 완
 async function executeQuery(query, values) {
   if (!pool) {
     throw new Error("DB가 연결되지 않았습니다.");
@@ -157,10 +156,8 @@ function fileCrypto(fileBuffer, secret, key) {
   console.log(key, "key");
   console.log(secret.iv, "iv");
   return new Uint8Array(encrypted);
-}
-function base64ToHex(input) {
-  return Buffer.from(input, "base64");
-}
+} //완
+
 // dataJson = {fileName,chunkSize,chunkMax,iv,chipId}
 async function mqttPub(secret) {
   const filesInstance = await Files.getInstance(secret.fileName);
