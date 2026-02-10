@@ -5,7 +5,7 @@
   "main": "mqtt-server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"node socket-server.js \" \"node mqtt-server.js\""
+    "dev": "node src/index.js"
   },
   "keywords": [],
   "author": "",

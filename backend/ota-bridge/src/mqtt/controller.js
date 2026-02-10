@@ -16,14 +16,14 @@ class Controller {
     this.#server
       .subscribe("backend", (err) => {
         if (!err) {
-          console.log("구독 성공");
+          console.log("backend 구독 성공");
         } else {
           console.log("구독 실패", err);
         }
       })
       .subscribe("status", (err) => {
         if (!err) {
-          console.log("구독 성공");
+          console.log("backend 구독 성공");
         } else {
           console.log("구독 실패", err);
         }
