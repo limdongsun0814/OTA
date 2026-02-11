@@ -15,7 +15,7 @@ export async function PUT(request: Request) {
     const result = await executeQuery(
       `update firmware set upload_firmware = ? 
       where chip_id = ?`,
-      [data[val]["upload firmware"], data[val]["chip id"]]
+      [data[val]["upload firmware"], data[val]["chip id"]],
     );
     resData[result[0].affectedRows].push(data[val]["chip id"]);
     if (uploadFirmwareData[data[val]["upload firmware"]] == null) {
@@ -28,7 +28,7 @@ export async function PUT(request: Request) {
     MqttPublish(
       "status",
       UPLOAD_DIR + "/" + fileName,
-      uploadFirmwareData[fileName]
+      uploadFirmwareData[fileName],
     );
   }
   // uploadFirmware(UPLOAD_DIR + "/" + fileName, [chip[0][0].chip_id]);
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     JOIN
         mcu
     ON
-        firmware.chip_id = mcu.chip_id`
+        firmware.chip_id = mcu.chip_id`,
   );
   return NextResponse.json(result[0]);
 }
@@ -62,19 +62,35 @@ export async function POST(request: Request) {
     let status = 500;
     if (file) {
       let extension = file.name.split(".").slice(-2);
-      let id = uuidv4();
+      const now = new Date();
+
+      const formatted =
+        now.getFullYear() +
+        "-" +
+        String(now.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(now.getDate()).padStart(2, "0") +
+        " " +
+        String(now.getHours()).padStart(2, "0") +
+        "-" +
+        String(now.getMinutes()).padStart(2, "0") +
+        "-" +
+        String(now.getSeconds()).padStart(2, "0");
+
+      console.log(formatted);
       console.log("Request:", file.name, file.type, file.size, extension);
-      if ((extension[0] == "ino", extension[1] == "bin")) {
+      if (extension[1] == "bin") {
         const buffer = Buffer.from(await file.arrayBuffer());
         await fs.mkdir(UPLOAD_DIR, { recursive: true });
-        const filePath = path.join(UPLOAD_DIR, id + file.name);
+        const filePath = path.join(UPLOAD_DIR, formatted + file.name);
         console.log(filePath);
         await executeQuery(
           "insert into upload_firmware ( file_name )value( ? )",
-          [id + file.name]
+          [formatted + file.name],
         );
         console.log(buffer[buffer.length - 1], "result2");
         await fs.writeFile(filePath, buffer);
+        /*
         if (now) {
           const chipId = await executeQuery("select chip_id from mcu");
           let chipIdList = [];
@@ -84,19 +100,19 @@ export async function POST(request: Request) {
           console.log(chipIdList);
           uploadFirmware(filePath, chipId);
         }
-        // MqttPublish(uploadTopic, id + file.name);
+        */
 
         const firmwareList = await executeQuery(
-          "select * from upload_firmware"
+          "select * from upload_firmware",
         );
-
+        /*
         const socketHostname = process.env.SOCKET_HOSTNAME;
         const socketPort = process.env.SOCKET_PORT;
         const socket = io(`http://${socketHostname}:${socketPort}`);
         socket.on("connect", () => {
           socket.emit("firmware", firmwareList[0]);
         });
-
+        */
         messge = "파일 및 데이터가 성공적으로 업로드되었습니다.";
         status = 200;
       } else {
@@ -108,7 +124,7 @@ export async function POST(request: Request) {
       {
         message: messge,
       },
-      { status: status }
+      { status: status },
     );
   } catch (error) {
     console.log("Error: ", error);
@@ -117,7 +133,7 @@ export async function POST(request: Request) {
         message: "에러가 발생했습니다.",
         error: error,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
