@@ -17,22 +17,24 @@ const emit = defineEmits(["change:chg"]);
       </thead>
       <tbody>
         <tr v-for="(item, index) in props.firmware" :key="index">
-          <td scope="row">{{ item["chip id"] }}</td>
-          <td>{{ item["ip"] }}</td>
+          <td scope="row">{{ item["chip_id"]["chip_id"] }}</td>
+          <td>{{ item["chip_id"]["ip"] }}</td>
           <td>
             <select @change="emit('change:chg', $event, index)">
               <option
                 v-for="(selectItem, selectIndex) in props.firmwareList"
                 :key="selectIndex"
                 :value="selectItem.file_name"
-                :selected="selectItem.file_name == item['upload firmware']"
+                :selected="
+                  selectItem.file_name == item['upload_firmware'].file_name
+                "
               >
                 {{ selectItem.file_name }}
               </option>
             </select>
           </td>
-          <td>{{ item["status"] }}</td>
-          <td>{{ item["last upload time"] }}</td>
+          <td>{{ item["chip_id"]["status"] }}</td>
+          <td>{{ item["last_upload_time"] }}</td>
         </tr>
       </tbody>
     </table>

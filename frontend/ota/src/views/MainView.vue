@@ -28,7 +28,25 @@ const socketPort = process.env.VUE_APP_SOCKET_PORT;
 // console.log(`http://${socketHostname}:${socketPort}`, "ddddddddddd");
 const socket = io(`http://${socketHostname}:${socketPort}`);
 
+const fetchData = async () => {
+  axios.get("/backend/firmware").then((res) => {
+    const result = {};
+    for (let arr of res.data) {
+      result[arr["chip_id"]["chip_id"]] = arr;
+    }
+    firmware.value = result;
+    console.log(firmware.value, res.data, "result");
+    // firmware.value = res.data;
+  });
+  axios.get("/backend/upload/firmware").then((res) => {
+    console.log(res.data, "firmwareList");
+    firmwareList.value = res.data;
+  });
+};
+
 onMounted(() => {
+  fetchData();
+
   socket.on("status", (data) => {
     console.log(data, "socket", firmware.value);
     for (let key in data) {
@@ -74,18 +92,20 @@ export default defineComponent({
     },
   }),
   created() {
+    /*
     axios.get("/backend/firmware").then((res) => {
       const result = {};
       for (let arr of res.data) {
-        result[arr["chip id"]] = arr;
+        result[arr["chip_id"]["chip_id"]] = arr;
       }
-      console.log(result);
       firmware.value = result;
+      console.log(firmware.value, res.data, "result");
+      // firmware.value = res.data;
     });
     axios.get("/backend/upload/firmware").then((res) => {
       console.log(res.data, "firmwareList");
       firmwareList.value = res.data;
-    });
+    });*/
   },
   methods: {
     saveFn() {

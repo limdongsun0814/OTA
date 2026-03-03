@@ -1,5 +1,5 @@
 arduino_secrets.h
-build/*
+build
 backupFile/*
 .pio
 .vscode
