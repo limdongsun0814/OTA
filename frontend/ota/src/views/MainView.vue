@@ -47,15 +47,24 @@ const fetchData = async () => {
 onMounted(() => {
   fetchData();
 
+  socket.on("disconnect", () => {
+    console.log("❌ 소켓 끊김");
+  });
+
+  socket.on("connect", () => {
+    console.log("✅ 소켓 연결됨");
+  });
+
   socket.on("status", (data) => {
     console.log(data, "socket", firmware.value);
     for (let key in data) {
-      firmware.value[key]["status"] = data[key];
+      firmware.value[key]["chip_id"]["status"] = data[key];
     }
+    console.log(firmware.value);
   });
   socket.on("ip", (data) => {
     for (let key in data) {
-      firmware.value[key]["ip"] = data[key];
+      firmware.value[key]["chip_id"]["ip"] = data[key];
     }
   });
   socket.on("firmware", (data) => {
@@ -110,7 +119,7 @@ export default defineComponent({
   methods: {
     saveFn() {
       axios.put("/backend/firmware", firmware.value).then((res) => {
-        console.log(res.data);
+        // console.log(res.data);
         if (res.data[0].length == 0) {
           alert("성공적으로 변경되었습니다.");
         } else {

@@ -4,12 +4,14 @@ import { MqttService } from './mqtt.service';
 import { StatePayloadDto } from './dto/statusMqtt.dto';
 import { StateService } from 'src/state/state.service';
 import { StateDto } from 'src/state/dto/state.dto';
+import { SocketService } from 'src/socket/socket.service';
 
 @Controller()
 export class MqttController {
   constructor(
     private readonly mqttService: MqttService,
     private readonly stateService: StateService,
+    private readonly socketService: SocketService,
   ) {}
 
   @MessagePattern('status')
@@ -24,5 +26,13 @@ export class MqttController {
     this.mqttService.pubFirmware(payload).catch((err) => {
       console.log(err);
     });
+  }
+  @MessagePattern('test')
+  test() {
+    this.socketService.send('status', 'aaaa');
+
+    // this.mqttService.test().catch((err) => {
+    //   console.log(err);
+    // });
   }
 }

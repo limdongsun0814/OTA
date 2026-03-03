@@ -5,7 +5,6 @@ import { StateDto } from 'src/state/dto/state.dto';
 import { StatePayloadDto } from './dto/statusMqtt.dto';
 import { StateService } from 'src/state/state.service';
 import { CryptoService } from 'src/crypto/crypto.service';
-import { SocketService } from 'src/socket/socket.service';
 import { McuService } from 'src/mcu/mcu.service';
 import { status } from 'src/mcu/entities/status.enum';
 import * as mqtt from 'mqtt';
@@ -18,12 +17,22 @@ export class MqttService {
     private readonly fileService: FileService,
     private readonly stateService: StateService,
     private readonly cryptoService: CryptoService,
-    private readonly socketService: SocketService,
     private readonly mcuService: McuService,
   ) {}
   emit(topic: string, payload: string | Buffer) {
     console.log('send mqtt', topic, payload);
     this.client.publish(topic, payload);
+  }
+
+  async test() {
+    await this.mcuService
+      .update('7715083', {
+        status: status.uploading,
+      })
+      .then((data) =>
+        console.log(data, data ? 'update success' : 'update failed'),
+      )
+      .catch((err) => console.log(err));
   }
 
   async pubStatus(payload: StatePayloadDto) {
@@ -58,16 +67,15 @@ export class MqttService {
     if (state == undefined) return;
     state.chunkIndex = stateInput.chunkIndex;
     if (state.chunkIndex == 0) {
+      console.log('들어옮??????????????????????');
       this.mcuService
         .update(state.chipId, {
           status: status.uploading,
-          chip_id: state.chipId,
         })
         .then((data) =>
           console.log(data, data ? 'update success' : 'update failed'),
         )
         .catch((err) => console.log(err));
-      this.socketService.send('status', { [state.chipId]: 'uploading' });
     }
     const file = await FileService.get(state.filePath);
     if (file == undefined) return;
@@ -79,6 +87,7 @@ export class MqttService {
     const { iv, encryptedArr } = this.cryptoService.crypto(buf);
     const transfer = Buffer.concat([iv, encryptedArr]);
     console.log(
+      state.chipId,
       transfer.length,
       encryptedArr.length,
       buf.length,
@@ -87,18 +96,16 @@ export class MqttService {
       state.chunkMax,
     );
     this.client.publish(state.chipId, transfer, () => {
-      if (state.chunkIndex != state.chunkMax) return;
-
+      if (state.chunkIndex != state.chunkMax - 1) return;
+      console.log('업데이트 끝');
       this.mcuService
         .update(state.chipId, {
           status: status.restart,
-          chip_id: state.chipId,
         })
         .then((data) =>
           console.log(data, data ? 'update success' : 'update failed'),
         )
         .catch((err) => console.log(err));
-      this.socketService.send('status', { [state.chipId]: 'restart' });
 
       FileService.release(state.filePath);
       StateService.remove(state.chipId);

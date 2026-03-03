@@ -5,7 +5,6 @@ import { Not, Repository } from 'typeorm';
 import { FirmwareDto } from './dto/Firmware.dto';
 import path from 'path';
 import { MqttService } from 'src/mqtt/mqtt.service';
-import { SocketService } from 'src/socket/socket.service';
 import { status } from 'src/mcu/entities/status.enum';
 import { McuService } from 'src/mcu/mcu.service';
 
@@ -17,7 +16,6 @@ export class FirmwareService {
     private readonly firmwareRepo: Repository<Firmware>,
     private readonly mcuService: McuService,
     private readonly mqttService: MqttService,
-    private readonly socketService: SocketService,
   ) {}
 
   async findAll(): Promise<Firmware[]> {
@@ -45,7 +43,11 @@ export class FirmwareService {
           .update(chip_id, {
             status: status.waiting,
           })
+          .then((data) =>
+            console.log(data, data ? 'waiting success' : 'waiting failed'),
+          )
           .catch((err) => console.log(err));
+
         if (!checkFirmware.has(firmwareArrInput[chip_id]['upload firmware']))
           checkFirmware.set(firmwareArrInput[chip_id]['upload firmware'], {
             chipIds: [],
@@ -67,14 +69,13 @@ export class FirmwareService {
     }
     const chunkSize = 1000;
 
-    this.socketService.send('status', socketData);
     console.log(checkFirmware, 'checkFirmware');
 
     for (const fileName of checkFirmware.keys()) {
       //소켓
       const status = {
         chunkCnt: Math.ceil(
-          checkFirmware.get(fileName)?.fileSize ?? 0 / chunkSize,
+          (checkFirmware.get(fileName)?.fileSize ?? 0) / chunkSize,
         ),
         chunkSize: chunkSize,
         fileSize: checkFirmware.get(fileName)?.fileSize ?? 0,

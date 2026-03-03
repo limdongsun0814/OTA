@@ -8,12 +8,7 @@ import { SocketModule } from 'src/socket/socket.module';
 import { McuModule } from 'src/mcu/mcu.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Firmware]),
-    McuModule,
-    MqttModule,
-    SocketModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Firmware]), McuModule, MqttModule],
   controllers: [FirmwareController],
   providers: [FirmwareService],
 })

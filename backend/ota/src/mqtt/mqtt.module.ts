@@ -14,8 +14,8 @@ import { McuModule } from 'src/mcu/mcu.module';
     FileModule,
     CryptoModule,
     StateModule,
-    SocketModule,
     McuModule,
+    SocketModule,
     ClientsModule.registerAsync([
       {
         name: 'MQTT_SERVICE',

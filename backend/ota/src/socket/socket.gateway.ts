@@ -1,6 +1,8 @@
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -8,7 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { SocketService } from './socket.service';
 
-@WebSocketGateway({ cors: 'localhost:3000' })
+@WebSocketGateway({ cors: 'localhost:3000' }) //
 export class SocketGateway {
   @WebSocketServer()
   server: Server;
@@ -17,6 +19,10 @@ export class SocketGateway {
 
   afterInit() {
     this.socketService.setServer(this.server);
+  }
+
+  send(event: string, data: any) {
+    this.server.emit(event, data);
   }
 
   @SubscribeMessage('message')

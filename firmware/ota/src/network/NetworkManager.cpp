@@ -48,7 +48,7 @@ void NetworkManager::onConnect(){
 
 void NetworkManager::onConnectBackend(){
     
-    String data = "{\"chipId\":\"" + String(ESP.getChipId()) + "\",\"ip\":\"" + WiFi.localIP().toString() + "\"}";
+    String data = "{\"chip_id\":\"" + String(ESP.getChipId()) + "\",\"ip\":\"" + WiFi.localIP().toString() + "\"}";
     this->http.begin(this->wifiClient,this->backendUrl + "/mcu");
     this->http.addHeader("Content-Type","application/json");
     int httpResponseCode = this->http.POST(data);

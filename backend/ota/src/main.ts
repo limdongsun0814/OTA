@@ -6,6 +6,17 @@ import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.int
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.connectMicroservice({
+    transport: Transport.MQTT,
+    options: { url: process.env.MQTT_BROKER },
+  });
+  await app.startAllMicroservices();
+
+  await app.listen(process.env.PORT ?? 3000);
+}
+bootstrap();
+
+/*
   const mqttApp = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
@@ -21,7 +32,4 @@ async function bootstrap() {
   app.enableCors(corsOptions);
   app.useWebSocketAdapter(new IoAdapter(app));
   await mqttApp.listen();
-
-  await app.listen(process.env.PORT ?? 3000);
-}
-bootstrap();
+*/
