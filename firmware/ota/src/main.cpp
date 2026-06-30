@@ -24,14 +24,24 @@ UpdateManager update;
 OTAController controller(crypto,hash,update);
 NetworkManager network(url,controller);
 
+bool ledState = false;
+unsigned long lastBlink = 0;
+
 void setup() {
     Serial.begin(115200);
     debugPort = &Serial;
     network.begin(ssid,password,mqttUrl,mqttPort);
     Serial.println("");
     Serial.println("ESP8266 start");
+    pinMode(LED_BUILTIN,OUTPUT);
 }
 
 void loop() {
     network.loop();
+    unsigned long now = millis();
+    if(now-lastBlink>1000){
+        ledState=!ledState;
+        lastBlink=now;
+        digitalWrite(LED_BUILTIN,ledState?LOW:HIGH);
+    }
 }

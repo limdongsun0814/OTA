@@ -50,4 +50,14 @@ export class SocketGateway {
     console.log(data);
     client.broadcast.emit('ip', data);
   }
+  @SubscribeMessage('FirmwareList')
+  handleTest4(@MessageBody() data: string, @ConnectedSocket() client: Socket) {
+    console.log(data);
+    client.broadcast.emit('FirmwareList', data);
+  }
+  @SubscribeMessage('FirmwareUnused')
+  handleTest5(@MessageBody() data: string, @ConnectedSocket() client: Socket) {
+    console.log(data);
+    client.broadcast.emit('FirmwareUnused', data);
+  }
 }

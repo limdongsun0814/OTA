@@ -1,11 +1,19 @@
-import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { status } from './status.enum';
 import { Firmware } from 'src/firmware/entities/firmware.entity';
 
 @Entity()
 export class Mcu {
   @PrimaryColumn()
-  @OneToMany(() => Firmware, (firmware) => firmware.chip_id)
   chip_id: string;
   @Column()
   ip: string;
@@ -14,4 +22,9 @@ export class Mcu {
     enum: status,
   })
   status: status;
+  @UpdateDateColumn()
+  last_upload_time: Date;
+  @ManyToOne(() => Firmware, { eager: true })
+  @JoinColumn({ name: 'upload_firmware', referencedColumnName: 'file_name' })
+  upload_firmware: Firmware;
 }

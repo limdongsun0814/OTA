@@ -49,13 +49,18 @@ void NetworkManager::onConnect(){
 void NetworkManager::onConnectBackend(){
     
     String data = "{\"chip_id\":\"" + String(ESP.getChipId()) + "\",\"ip\":\"" + WiFi.localIP().toString() + "\"}";
-    this->http.begin(this->wifiClient,this->backendUrl + "/mcu");
-    this->http.addHeader("Content-Type","application/json");
-    int httpResponseCode = this->http.POST(data);
-    if(debugPort!=nullptr){
-        debugPort->print("HTTP 응답 코드: ");
-        debugPort->println(httpResponseCode);
-    }
+    int httpResponseCode;
+    do{
+        this->http.begin(this->wifiClient,this->backendUrl + "/mcu");
+        this->http.addHeader("Content-Type","application/json");
+        httpResponseCode = this->http.POST(data);
+        
+        if(debugPort!=nullptr){
+            debugPort->print("HTTP 응답 코드: ");
+            debugPort->println(httpResponseCode);
+        }
+        delay(1000);
+    }while(httpResponseCode<200 || httpResponseCode>=300);
 }
 
 bool NetworkManager::isMqttConnected(){
@@ -90,7 +95,7 @@ void NetworkManager::mqttReconnect(){
 //wifiReconnected로 명 변경할거 mqtt도 
 
 void NetworkManager::loop(){
-    while(!NetworkManager::isMqttConnected()){
+    if(!NetworkManager::isMqttConnected()){
         NetworkManager::mqttReconnect();
     }
     client.loop();

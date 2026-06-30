@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MqttService } from './mqtt.service';
 import { MqttController } from './mqtt.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
@@ -11,10 +11,10 @@ import { McuModule } from 'src/mcu/mcu.module';
 
 @Module({
   imports: [
+    forwardRef(() => McuModule),
     FileModule,
     CryptoModule,
     StateModule,
-    McuModule,
     SocketModule,
     ClientsModule.registerAsync([
       {

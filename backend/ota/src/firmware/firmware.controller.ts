@@ -3,14 +3,12 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
+  UploadedFile,
+  UseInterceptors,
   Delete,
-  Put,
 } from '@nestjs/common';
 import { FirmwareService } from './firmware.service';
-import { FirmwareDto } from './dto/Firmware.dto';
-
+import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('firmware')
 export class FirmwareController {
   constructor(private readonly firmwareService: FirmwareService) {}
@@ -19,9 +17,24 @@ export class FirmwareController {
   async findAll() {
     return await this.firmwareService.findAll();
   }
-  @Put()
-  firmwareUpdate(@Body() firmwareArrInput: { [key: string]: FirmwareDto }) {
-    this.firmwareService.firmwareUpdate(firmwareArrInput);
-    return { 0: [] };
+
+  @Post()
+  @UseInterceptors(FileInterceptor('upload'))
+  async firmwareUpload(@UploadedFile() file: Express.Multer.File) {
+    const result = await this.firmwareService.firmwareUpload(file);
+    return result;
+  }
+  @Get('/unused')
+  async firmwareUnused() {
+    const result = this.firmwareService.unused();
+    return result;
+  }
+  @Delete('/unused')
+  async removeFirmware(@Body() removeFirmware: Record<string, boolean>) {
+    console.log(removeFirmware, Object.keys(removeFirmware));
+    const result = await this.firmwareService.removeFirmware(
+      Object.keys(removeFirmware),
+    );
+    return result;
   }
 }

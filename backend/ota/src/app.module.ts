@@ -6,7 +6,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { FirmwareModule } from './firmware/firmware.module';
 import { EmpModule } from './emp/emp.module';
 import { McuModule } from './mcu/mcu.module';
-import { UploadFirmwareModule } from './upload_firmware/upload_firmware.module';
 import * as Joi from 'joi';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MqttModule } from './mqtt/mqtt.module';
@@ -58,7 +57,6 @@ import { SocketModule } from './socket/socket.module';
     FirmwareModule,
     EmpModule,
     McuModule,
-    UploadFirmwareModule,
     MqttModule,
     CryptoModule,
     FileModule,

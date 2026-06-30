@@ -1,8 +1,8 @@
 <template>
-  <slot name="openModal" :modal="modalInput"></slot>
+  <slot name="openModal" :modal="props.modal"></slot>
   <div
     class="modal fade"
-    id="exampleModal"
+    :id="props.modal['data-bs-target']"
     tabindex="-1"
     aria-labelledby="exampleModalLabel"
     aria-hidden="true"
@@ -36,7 +36,7 @@
             @click="emit('click:clk', $event)"
             data-bs-dismiss="modal"
           >
-            업로드
+            완료
           </button>
         </div>
       </div>

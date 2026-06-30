@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Firmware } from './entities/firmware.entity';
-import { Not, Repository } from 'typeorm';
-import { FirmwareDto } from './dto/Firmware.dto';
+import { In, Repository } from 'typeorm';
 import path from 'path';
 import { MqttService } from 'src/mqtt/mqtt.service';
-import { status } from 'src/mcu/entities/status.enum';
 import { McuService } from 'src/mcu/mcu.service';
+import fs from 'fs/promises';
+import { SocketService } from 'src/socket/socket.service';
+import { string } from 'joi';
 
 @Injectable()
 export class FirmwareService {
@@ -14,75 +15,100 @@ export class FirmwareService {
   constructor(
     @InjectRepository(Firmware)
     private readonly firmwareRepo: Repository<Firmware>,
-    private readonly mcuService: McuService,
-    private readonly mqttService: MqttService,
+    private readonly socketService: SocketService,
   ) {}
 
-  async findAll(): Promise<Firmware[]> {
-    return await this.firmwareRepo.find();
+  async removeFirmware(
+    firmwareList: string[],
+  ): Promise<{ deletedCount: number }> {
+    const rmFile: string[] = [];
+
+    await Promise.all(
+      firmwareList.map(async (name) => {
+        try {
+          await fs.unlink(`${this.UPLOAD_DIR}/${name}`);
+          await this.firmwareRepo.delete({ file_name: name });
+          this.findAll(true);
+          rmFile.push(name);
+        } catch (err) {
+          console.log(err);
+        }
+      }),
+    );
+
+    console.log(rmFile);
+    return { deletedCount: rmFile.length };
   }
 
-  async firmwareUpdate(firmwareArrInput: { [key: string]: FirmwareDto }) {
-    console.log(firmwareArrInput);
-    const checkFirmware = new Map<
-      string,
-      { chipIds: string[]; fileSize: number }
-    >();
+  async unused(): Promise<Firmware[]> {
+    return this.firmwareRepo.query(
+      `select * from firmware 
+        where not exists 
+          (select 1 from mcu 
+          where mcu.upload_firmware = firmware.file_name)`,
+    );
+  }
 
-    const socketData: { [key: string]: string } = {};
-    for (const chip_id in firmwareArrInput) {
-      if (firmwareArrInput[chip_id]['upload firmware'] == undefined) return;
-      const check = await this.firmwareRepo.findOneBy({
-        chip_id: chip_id,
-        upload_firmware: Not(firmwareArrInput[chip_id]['upload firmware']),
-      });
-      console.log(check, 'check');
-      if (check) {
-        socketData[chip_id] = 'waiting';
-        this.mcuService
-          .update(chip_id, {
-            status: status.waiting,
-          })
-          .then((data) =>
-            console.log(data, data ? 'waiting success' : 'waiting failed'),
-          )
-          .catch((err) => console.log(err));
+  async findAll(socket?: any) {
+    if (socket)
+      this.unused()
+        .then((data) => {
+          this.socketService.send('FirmwareUnused', data);
+        })
+        .catch((err) => console.log(err));
+    return this.firmwareRepo.find().then((data) => {
+      if (socket) {
+        this.socketService.send('FirmwareList', data);
+      }
+      return data;
+    });
+  }
 
-        if (!checkFirmware.has(firmwareArrInput[chip_id]['upload firmware']))
-          checkFirmware.set(firmwareArrInput[chip_id]['upload firmware'], {
-            chipIds: [],
-            fileSize: check.upload_firmware.file_size,
-          });
+  async save(data: string, size: number) {
+    return this.firmwareRepo.save({ file_name: data, file_size: size });
+  }
 
-        checkFirmware
-          .get(firmwareArrInput[chip_id]['upload firmware'])
-          ?.chipIds.push(chip_id);
+  async firmwareUpload(file: Express.Multer.File) {
+    console.log(file);
+    let msg = 'Error';
+    let status = 500;
+    let uploadFirmware;
+    if (file) {
+      const extension = file.originalname.split('.').slice(-2);
+      const now = new Date();
 
-        this.firmwareRepo
-          .update(chip_id, {
-            upload_firmware: {
-              file_name: firmwareArrInput[chip_id]['upload firmware'],
-            },
-          })
-          .catch((err) => console.log(err));
+      const formatted =
+        now.getFullYear() +
+        '-' +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(now.getDate()).padStart(2, '0') +
+        ' ' +
+        String(now.getHours()).padStart(2, '0') +
+        '-' +
+        String(now.getMinutes()).padStart(2, '0') +
+        '-' +
+        String(now.getSeconds()).padStart(2, '0');
+
+      console.log(formatted);
+      console.log('Request:', file.originalname, file.size, extension);
+      if (extension[1] == 'bin') {
+        const buffer = Buffer.from(await file.buffer);
+        await fs.mkdir(this.UPLOAD_DIR, { recursive: true });
+        const filePath = path.join(
+          this.UPLOAD_DIR,
+          formatted + file.originalname,
+        );
+        console.log(filePath);
+
+        await this.save(formatted + file.originalname, Number(file.size));
+        console.log(buffer[buffer.length - 1], 'result2');
+        await fs.writeFile(filePath, buffer);
+        uploadFirmware = await this.findAll(true);
+        msg = 'success';
+        status = 200;
       }
     }
-    const chunkSize = 1000;
-
-    console.log(checkFirmware, 'checkFirmware');
-
-    for (const fileName of checkFirmware.keys()) {
-      //소켓
-      const status = {
-        chunkCnt: Math.ceil(
-          (checkFirmware.get(fileName)?.fileSize ?? 0) / chunkSize,
-        ),
-        chunkSize: chunkSize,
-        fileSize: checkFirmware.get(fileName)?.fileSize ?? 0,
-        fileName: this.UPLOAD_DIR + '/' + fileName,
-        chipIds: checkFirmware.get(fileName)?.chipIds,
-      };
-      this.mqttService.emit('status', JSON.stringify(status));
-    }
+    return { msg, status, uploadFirmware };
   }
 }

@@ -90,6 +90,7 @@ void OTAController::onUpdate(uint8_t* payload, size_t length,PubSubClient& clien
     }else{
         state.setError(Error::HASH_MISMATCH);
         state.hasError();
+        ESP.restart();
         return;
     }
 

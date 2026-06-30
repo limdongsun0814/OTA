@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { FileService } from 'src/file/file.service';
 import { StateDto } from 'src/state/dto/state.dto';
@@ -17,6 +17,7 @@ export class MqttService {
     private readonly fileService: FileService,
     private readonly stateService: StateService,
     private readonly cryptoService: CryptoService,
+    @Inject(forwardRef(() => McuService))
     private readonly mcuService: McuService,
   ) {}
   emit(topic: string, payload: string | Buffer) {
@@ -47,12 +48,12 @@ export class MqttService {
 
     for (const chipId of payload.chipIds) {
       state.chipId = chipId;
-
       const status = StateService.create(state);
       if (status == undefined) return;
 
       const file = await FileService.get(state.filePath);
       if (file == undefined) return;
+      console.log('payload: ', payload, state, status, file);
 
       file.refCnt++;
       const buf = Buffer.alloc(4);
@@ -66,8 +67,10 @@ export class MqttService {
     const state = StateService.get(stateInput.chipId);
     if (state == undefined) return;
     state.chunkIndex = stateInput.chunkIndex;
+
+    // 업데이트 시작 시
     if (state.chunkIndex == 0) {
-      console.log('들어옮??????????????????????');
+      console.log('=======업데이트 시작=======');
       this.mcuService
         .update(state.chipId, {
           status: status.uploading,
@@ -77,6 +80,7 @@ export class MqttService {
         )
         .catch((err) => console.log(err));
     }
+
     const file = await FileService.get(state.filePath);
     if (file == undefined) return;
     const buf = FileService.slice(
@@ -94,6 +98,7 @@ export class MqttService {
       file.buffer.length,
       state.chunkIndex,
       state.chunkMax,
+      state.filePath,
     );
     this.client.publish(state.chipId, transfer, () => {
       if (state.chunkIndex != state.chunkMax - 1) return;
