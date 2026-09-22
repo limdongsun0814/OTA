@@ -1,23 +1,19 @@
 # OTA (Over-The-Air) System
 
-ESP8266 기반 장치의 펌웨어를 원격으로 업데이트하고, 백엔드와 웹 대시보드에서 장치 상태를 관리하는 풀스택 프로젝트입니다.
-
-이 프로젝트는 IoT 환경에서 장치와 서버가 안전하게 통신하고, 원격 업데이트를 수행하는 흐름을 설계하는 데 초점을 두었습니다. NestJS, Microservices, Socket.IO, MySQL, Vue를 조합해 실제로 동작하는 OTA 시스템을 구성했습니다.
+ESP8266 기반 장치의 펌웨어를 무선으로 업데이트하고, 백엔드와 웹 대시보드에서 장치 상태를 관리하는 풀스택 프로젝트입니다. 
 
 ## 프로젝트 개요
 
-기존의 펌웨어 배포는 보통 직접 연결하거나 수동 업로드를 전제로 합니다. 이 프로젝트는 ESP8266 장치가 네트워크를 통해 서버로부터 펌웨어를 받아 업데이트할 수 있도록 구성하고, 웹 대시보드를 통해 장치 상태와 배포 상태를 실시간으로 확인할 수 있도록 구현했습니다.
+이 프로젝트는 ESP8266 장치가 네트워크를 통해 서버로부터 펌웨어를 받아 업데이트할 수 있도록 구성하고, 웹 대시보드를 통해 장치와 펌웨어 상태를 실시간으로 확인하고 업데이트할 수 있도록 구현했습니다.
 
-핵심 목표는 단순 기능 구현이 아니라, 실제 장치 환경에서 안정적으로 동작하는 OTA 업데이트 구조를 설계하는 것이었습니다.
 
 ## 주요 기능
 
-- ESP8266 장치의 무선 펌웨어 업데이트
-- MQTT 기반 장치-백엔드 통신
-- 펌웨어 업로드 및 배포 관리
-- 장치 연결 상태 및 펌웨어 버전 실시간 확인
-- Socket.IO 기반 상태 모니터링
-- MySQL 기반 장치 및 배포 정보 관리
+- 무선 펌웨어 업데이트
+- 펌웨어 무결성 검사
+- MQTT 기반 MCU와 백엔드 간 통신
+- 펌웨어 업로드 및 배포
+- MCU 연결 상태 및 펌웨어 버전 확인
 
 ## 시스템 구성
 
@@ -31,17 +27,51 @@ OTA/
 ### 동작 흐름
 
 ```text
-ESP8266 펌웨어 <-- HTTP / MQTT --> NestJS 백엔드 <-- HTTP / Socket.IO --> Vue 대시보드
+ESP8266 펌웨어 <-- HTTP / MQTT --> NestJS 백엔드 <-- HTTP / Socket --> Vue 대시보드
                                       └── MySQL (TypeORM)
 ```
+
+## OTA 전송 흐름
+
+<div align="center" style="zoom: 50%; width: 50%;">
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Admin as 관리자
+    participant Server as Backend
+    participant MQTT as MQTT Broker
+    participant MCU as ESP8266 MCU
+    participant Flash as Flash Memory
+    participant UI as Web Dashboard
+
+    Admin->>Server: 펌웨어 업로드
+    Server->>Server: bin 파일 저장 및 메타데이터 준비
+    Server->>MQTT: firmware update 명령 전송
+    MQTT-->>MCU: 업데이트 시작 알림
+    MCU->>MCU: 전체 크기/청크 수 계산
+    loop 청크 전송
+        Server->>MQTT: 청크 데이터 전송 (chunkIndex, length)
+        MQTT-->>MCU: 청크 수신
+        MCU->>MCU: AES-128-CBC 복호화
+        MCU->>MCU: SHA-256 무결성 검증
+        MCU->>Flash: Update.write()로 플래시 기록
+    end
+    MCU->>MCU: 마지막 청크 확인
+    MCU->>MCU: 재시작
+    MCU-->>Server: 상태 업데이트 전송
+    Server-->>UI: 실시간 상태 반영
+```
+
+</div>
 
 ## 기술 스택
 
 | 영역     | 기술                                                |
 | -------- | --------------------------------------------------- |
 | Firmware | PlatformIO, ESP8266, PubSubClient                   |
-| Backend  | NestJS 11, Microservices, Socket.IO, TypeORM, MySQL |
-| Frontend | Vue 3, Bootstrap, Socket.IO Client                  |
+| Backend  | NestJS 11, Socket, TypeORM, MySQL |
+| Frontend | Vue 3, Bootstrap, Socket                  |
 
 ## 구현 포인트
 
@@ -49,38 +79,22 @@ ESP8266 펌웨어 <-- HTTP / MQTT --> NestJS 백엔드 <-- HTTP / Socket.IO --> 
 
 서버는 장치 상태와 배포 정보를 저장하고, MQTT를 통해 업데이트 명령을 전달하며 장치가 필요한 펌웨어를 다운로드하고 적용하도록 구성했습니다. 이를 통해 장치별 업데이트 상태를 추적할 수 있도록 설계했습니다.
 
-### 2. 실시간 상태 모니터링
+### 2. 펌웨어 분할 전송 구조 설계
 
-Socket.IO를 활용해 장치 연결 상태, 버전 정보, 배포 상태를 실시간으로 확인할 수 있도록 구현했습니다. 단순히 API 결과를 확인하는 수준이 아니라, 사용자에게 바로 반영되는 상태 반응을 구성했습니다.
+ESP8266 메모리와 <abbr title="MQTT 클라이언트 네트워크의 버퍼를 늘릴 수도 있지만 늘릴 경우 OTA 시스템 때문에 차지하는 RAM 메모리가 비약적으로 커지게 된다.">MQTT 클라이언트 네트워크 버퍼가 제한적이다.</abbr> 따라서 펌웨어를 한 번에 전송하지 않고 펌웨어를 일정 크기로 분할하여 전송하도록 설계했습니다.  
 
-### 3. 보안 및 암호화
+### 3. 실시간 상태 모니터링
 
-펌웨어와 통신 과정에서 AES 기반 암호화 처리를 적용해 데이터가 그대로 전송되지 않도록 구성했습니다. 네트워크 환경에서도 민감한 정보를 안전하게 보호할 수 있도록 고려했습니다.
+Socket를 활용해 MCU 연결 상태, 버전 정보, 배포 상태를 실시간으로 확인할 수 있도록 구현했습니다. 단순히 API 응답를 확인하는 수준이 아니라, 사용자에게 바로 반영되는 상태 변화 반영을 구성했습니다.
 
-### 4. 풀스택 연동
+### 4. 보안 및 데이터 무결성
 
-백엔드, 프론트엔드, 펌웨어가 각기 다른 역할을 수행하면서 하나의 전체 시스템으로 연결되는 구조를 설계했습니다. 모듈 간 책임 분리를 이해하고 실제 운영 흐름에 맞게 조합하는 경험을 쌓았습니다.
-
-## 개발 환경
-
-- NestJS 11
-- Vue 3
-- PlatformIO
-- ESP8266
-- MySQL
-- MQTT Broker(mosquitto)
-- Socket.IO
+펌웨어와 통신 과정에서 AES-128-CBC(PKCS#7)와 SHA-256를 적용하여 데이터가 그대로 전송되지 않고 보안과 데이터 무결성 문제를 해결했습니다.
 
 ## 프로젝트 성과
 
-이 프로젝트를 통해 다음 역량을 강화했습니다.
-
-- IoT 장치와 서버 간 통신 설계
-- 비동기 메시지 기반 구조 이해
-- 풀스택 서비스 연동 경험
-- 보안 요소를 고려한 데이터 전송 설계
-- 실시간 대시보드 구현 경험
-
-## 참고
-
-이 프로젝트는 데모 수준을 넘어, 실제 장치 환경을 고려한 OTA 배포 구조를 구현하는 데 중점을 두었습니다. 특히 MQTT와 HTTP를 조합해 장치 제어와 상태 동기화 흐름을 설계하는 경험이 프로젝트의 핵심 가치였습니다.
+- IoT 장치와 서버 간 통신
+- 보안 요소를 고려한 데이터 전송
+- 데이터 분할 전송 구조
+- 실시간 대시보드
+- 무결성 검사
