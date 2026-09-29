@@ -19,59 +19,49 @@ ESP8266 기반 장치의 펌웨어를 무선으로 업데이트하고, 백엔드
 
 ```text
 OTA/
-├── backend/ota/     # NestJS API 및 Microservices
-├── frontend/ota/    # Vue 관리자 웹 애플리케이션
-└── firmware/ota/    # ESP8266 기반 펌웨어
+├── backend/ota/     # NestJS
+├── frontend/ota/    # Vue
+└── firmware/ota/    # ESP8266
 ```
 
-### 동작 흐름
 
-```text
-ESP8266 펌웨어 <-- HTTP / MQTT --> NestJS 백엔드 <-- HTTP / Socket --> Vue 대시보드
-                                      └── MySQL (TypeORM)
-```
+## OTA 흐름도
 
-## OTA 전송 흐름
-
-<div align="center" style="zoom: 50%; width: 50%;">
+<div align="center" style="zoom: 80%; width: 80%;">
 
 ```mermaid
+%%{init: { "theme": "default", "sequence": { "boxMargin": 20, "rightAngles": true, "messageMargin": 50, "messageAlign": "left" } }}%%
+
 sequenceDiagram
     autonumber
     participant Admin as 관리자
-    participant Server as Backend
-    participant MQTT as MQTT Broker
-    participant MCU as ESP8266 MCU
-    participant Flash as Flash Memory
-    participant UI as Web Dashboard
+    participant Backend as Backend
+    participant MCU as ESP8266
 
-    Admin->>Server: 펌웨어 업로드
-    Server->>Server: bin 파일 저장 및 메타데이터 준비
-    Server->>MQTT: firmware update 명령 전송
-    MQTT-->>MCU: 업데이트 시작 알림
-    MCU->>MCU: 전체 크기/청크 수 계산
-    loop 청크 전송
-        Server->>MQTT: 청크 데이터 전송 (chunkIndex, length)
-        MQTT-->>MCU: 청크 수신
-        MCU->>MCU: AES-128-CBC 복호화
-        MCU->>MCU: SHA-256 무결성 검증
-        MCU->>Flash: Update.write()로 플래시 기록
+    Admin->>Backend: HTTP: 펌웨어 업데이트
+    Backend-->>MCU: MQTT: 펌웨어 상태 및 정보
+    loop 
+        MCU-->>Backend: MQTT: 청크 요청
+        Backend->>Backend: AES-128-CBC 암호화<br>
+        Backend-->>MCU: MQTT: 암호화된 청크
+        MCU->>MCU: AES-128-CBC 복호화<br>
+        MCU->>MCU: 업데이트<br>
     end
-    MCU->>MCU: 마지막 청크 확인
-    MCU->>MCU: 재시작
-    MCU-->>Server: 상태 업데이트 전송
-    Server-->>UI: 실시간 상태 반영
+    MCU->>MCU: SHA-256 무결성 검증<br>
+    MCU-->>Backend: MQTT: MCU 상태 전송
+    Backend->>Admin: Socket: 업데이트 상태 변경 및 알림
+    MCU->>MCU: 재시작<br>
 ```
 
 </div>
 
 ## 기술 스택
 
-| 영역     | 기술                                                |
-| -------- | --------------------------------------------------- |
-| Firmware | PlatformIO, ESP8266, PubSubClient                   |
-| Backend  | NestJS 11, Socket, TypeORM, MySQL |
-| Frontend | Vue 3, Bootstrap, Socket                  |
+| 영역 | 기술 |
+| - | - |
+| Firmware | PlatformIO, ESP8266, PubSubClient |
+| Backend  | NestJS, Socket, TypeORM |
+| Frontend | Vue, Bootstrap, Socket |
 
 ## 구현 포인트
 
