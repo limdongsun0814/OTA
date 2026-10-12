@@ -46,10 +46,12 @@ sequenceDiagram
         Backend-->>MCU: MQTT: 암호화된 청크
         MCU->>MCU: AES-128-CBC 복호화<br>
         MCU->>MCU: 업데이트<br>
+        MCU-->>Backend: MQTT: 업데이트 상태 전송
+        Backend->>Admin: Socket: MCU 상태 갱신
     end
     MCU->>MCU: SHA-256 무결성 검증<br>
-    MCU-->>Backend: MQTT: MCU 상태 전송
-    Backend->>Admin: Socket: 업데이트 상태 변경 및 알림
+    MCU-->>Backend: MQTT: 업데이트 상태 전송
+    Backend->>Admin: Socket: MCU 상태 갱신
     MCU->>MCU: 재시작<br>
 ```
 
@@ -60,7 +62,7 @@ sequenceDiagram
 | 영역 | 기술 |
 | - | - |
 | Firmware | PlatformIO, ESP8266, PubSubClient |
-| Backend  | NestJS, Socket, TypeORM |
+| Backend  | NestJS, Socket, Mosquitto, MySQL, TypeORM |
 | Frontend | Vue, Bootstrap, Socket |
 
 ## 구현 포인트
@@ -71,11 +73,11 @@ sequenceDiagram
 
 ### 2. 펌웨어 분할 전송 구조 설계
 
-ESP8266 메모리와 <abbr title="MQTT 클라이언트 네트워크의 버퍼를 늘릴 수도 있지만 늘릴 경우 OTA 시스템 때문에 차지하는 RAM 메모리가 비약적으로 커지게 된다.">MQTT 클라이언트 네트워크 버퍼가 제한적이다.</abbr> 따라서 펌웨어를 한 번에 전송하지 않고 펌웨어를 일정 크기로 분할하여 전송하도록 설계했습니다.  
+ESP8266 메모리와 <abbr title="MQTT 클라이언트 네트워크의 버퍼를 늘릴 수도 있지만 늘릴 경우 OTA 시스템 때문에 차지하는 메모리가 커지게 된다.">MQTT 클라이언트 네트워크 버퍼가 제한적이다.</abbr> 따라서 펌웨어를 한 번에 전송하지 않고 펌웨어를 일정 크기로 분할하여 전송하도록 설계했습니다.  
 
 ### 3. 실시간 상태 모니터링
 
-Socket를 활용해 MCU 연결 상태, 버전 정보, 배포 상태를 실시간으로 확인할 수 있도록 구현했습니다. 단순히 API 응답를 확인하는 수준이 아니라, 사용자에게 바로 반영되는 상태 변화 반영을 구성했습니다.
+Socket를 활용해 MCU 상태, 버전 정보, 배포 상태를 실시간으로 확인할 수 있도록 구현했습니다. 단순히 API 응답를 확인하는 수준이 아니라, 사용자에게 바로 반영되는 상태 변화 반영을 구성했습니다.
 
 ### 4. 보안 및 데이터 무결성
 
