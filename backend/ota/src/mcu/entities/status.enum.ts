@@ -1,6 +1,8 @@
 export enum status {
-  uploading = 'uploading',
-  restart = 'restart',
-  start = 'start',
-  waiting = 'waiting',
+  IDLE = 'IDLE',
+  RECEIVING = 'RECEIVING',
+  VERIFYING = 'VERIFYING',
+  UPDATING = 'UPDATING',
+  RESTART = 'RESTART',
+  ERROR = 'ERROR',
 }

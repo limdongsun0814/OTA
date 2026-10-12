@@ -12,6 +12,7 @@ const emit = defineEmits(["change:chg"]);
           <th scope="col">ip</th>
           <th scope="col">upload firmware</th>
           <th scope="col">status</th>
+          <th scope="col">detail</th>
           <th scope="col">last upload time</th>
         </tr>
       </thead>
@@ -22,7 +23,7 @@ const emit = defineEmits(["change:chg"]);
           <td>
             <select
               @change="emit('change:chg', $event, index)"
-              :disabled="item['status'] != 'start'"
+              :disabled="item['status'] != 'IDLE'"
             >
               <option
                 v-for="(selectItem, selectIndex) in props.firmwareList"
@@ -42,6 +43,9 @@ const emit = defineEmits(["change:chg"]);
             </select>
           </td>
           <td>{{ item["status"] }}</td>
+          <td class="detail-cell" :title="item['detail']">
+            {{ item["detail"] }}
+          </td>
           <td>{{ new Date(item["last_upload_time"]).toLocaleString() }}</td>
         </tr>
       </tbody>
@@ -53,6 +57,11 @@ const emit = defineEmits(["change:chg"]);
 .table-main {
   border: 1px solid black;
   border-radius: 5px;
+}
+.detail-cell {
+  width: 400px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .table-row {
   display: flex;

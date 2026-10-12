@@ -61,8 +61,8 @@ void UpdateManager::end(){
         delay(1000);
         ESP.restart();
     }else{
+        state.setError(Error::FLASH_END_FAILED,Update.getErrorString());
         if(debugPort!=nullptr){
-            state.setError(Error::FLASH_END_FAILED,Update.getErrorString());
             Update.printError(*debugPort);
             debugPort->println();
         }

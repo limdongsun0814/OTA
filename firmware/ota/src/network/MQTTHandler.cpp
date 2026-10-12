@@ -14,6 +14,7 @@ void MQTTHandler::begin(IOTAController& controller,PubSubClient& client){
 }
 
 void MQTTHandler::callback(char* topic, uint8_t* payload, size_t length){
+    
     if(strcmp(statusTopic,topic)==0){
         controller->onStatus(payload, length,*client);
     }else if(strcmp(updateTopic,topic)==0){
@@ -24,4 +25,7 @@ void MQTTHandler::callback(char* topic, uint8_t* payload, size_t length){
 void MQTTHandler::subscribeTopic(){
     this->client->subscribe(this->statusTopic);
     this->client->subscribe(this->updateTopic);
+
+    
+    controller->begin(*client);
 }

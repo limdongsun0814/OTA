@@ -25,16 +25,16 @@ export class MqttService {
     this.client.publish(topic, payload);
   }
 
-  async test() {
-    await this.mcuService
-      .update('7715083', {
-        status: status.uploading,
-      })
-      .then((data) =>
-        console.log(data, data ? 'update success' : 'update failed'),
-      )
-      .catch((err) => console.log(err));
-  }
+  // async test() {
+  //   await this.mcuService
+  //     .update('7715083', {
+  //       status: status.uploading,
+  //     })
+  //     .then((data) =>
+  //       console.log(data, data ? 'update success' : 'update failed'),
+  //     )
+  //     .catch((err) => console.log(err));
+  // }
 
   async pubStatus(payload: StatePayloadDto) {
     const state: StateDto = {
@@ -71,14 +71,14 @@ export class MqttService {
     // 업데이트 시작 시
     if (state.chunkIndex == 0) {
       console.log('=======업데이트 시작=======');
-      this.mcuService
-        .update(state.chipId, {
-          status: status.uploading,
-        })
-        .then((data) =>
-          console.log(data, data ? 'update success' : 'update failed'),
-        )
-        .catch((err) => console.log(err));
+      // this.mcuService
+      //   .update(state.chipId, {
+      //     status: status.uploading,
+      //   })
+      //   .then((data) =>
+      //     console.log(data, data ? 'update success' : 'update failed'),
+      //   )
+      //   .catch((err) => console.log(err));
     }
 
     const file = await FileService.get(state.filePath);
@@ -103,14 +103,14 @@ export class MqttService {
     this.client.publish(state.chipId, transfer, () => {
       if (state.chunkIndex != state.chunkMax - 1) return;
       console.log('업데이트 끝');
-      this.mcuService
-        .update(state.chipId, {
-          status: status.restart,
-        })
-        .then((data) =>
-          console.log(data, data ? 'update success' : 'update failed'),
-        )
-        .catch((err) => console.log(err));
+      // this.mcuService
+      //   .update(state.chipId, {
+      //     status: status.restart,
+      //   })
+      //   .then((data) =>
+      //     console.log(data, data ? 'update success' : 'update failed'),
+      //   )
+      //   .catch((err) => console.log(err));
 
       FileService.release(state.filePath);
       StateService.remove(state.chipId);

@@ -47,7 +47,7 @@ void NetworkManager::onConnect(){
 }
 
 void NetworkManager::onConnectBackend(){
-    
+    /*
     String data = "{\"chip_id\":\"" + String(ESP.getChipId()) + "\",\"ip\":\"" + WiFi.localIP().toString() + "\"}";
     int httpResponseCode;
     do{
@@ -60,7 +60,7 @@ void NetworkManager::onConnectBackend(){
             debugPort->println(httpResponseCode);
         }
         delay(1000);
-    }while(httpResponseCode<200 || httpResponseCode>=300);
+    }while(httpResponseCode<200 || httpResponseCode>=300);*/
 }
 
 bool NetworkManager::isMqttConnected(){
@@ -81,7 +81,6 @@ void NetworkManager::mqttReconnect(){
             debugPort->print(clientId);
             debugPort->println("연결 성공!");
         }
-        this->controller.begin();
     } else {
         if(debugPort!=nullptr){
             debugPort->print("연결 실패, rc=");

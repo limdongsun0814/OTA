@@ -3,6 +3,8 @@
 
 #include "../debug/DebugManager.h"
 #include <stdio.h>
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
 // ing 빼자
 enum class State{
     IDLE,
@@ -33,6 +35,7 @@ class OTAState
     public:
 
         static OTAState& getInstance();
+        void setClient(PubSubClient& client);
 
         void setState(State state);
         void setState(State state, size_t length);
@@ -44,6 +47,8 @@ class OTAState
         void setError(Error error,String detail);
 
         bool hasError();
+
+        String stateToString(State state);
     private:        
         OTAState(){}
         ~OTAState(){}
@@ -53,6 +58,7 @@ class OTAState
 
         State state;
         Error error=Error::NONE;
+        PubSubClient client;
 };
 
 #endif

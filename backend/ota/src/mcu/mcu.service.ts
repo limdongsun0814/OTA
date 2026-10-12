@@ -8,6 +8,7 @@ import path from 'path';
 import { MqttService } from 'src/mqtt/mqtt.service';
 import { status } from './entities/status.enum';
 import { FirmwareService } from 'src/firmware/firmware.service';
+import { McuDto } from './dto/mcu.dto';
 
 @Injectable()
 export class McuService {
@@ -25,7 +26,7 @@ export class McuService {
   async findAll(): Promise<Mcu[]> {
     return await this.mcuRepo.find();
   }
-  //요기 로직 정리가 필요하다
+
   async update(id: string, updateMcuDto: UpdateMcuDto) {
     console.log(id, updateMcuDto, updateMcuDto.status);
     await this.mcuRepo.update(id, updateMcuDto).then(() => {
@@ -38,6 +39,7 @@ export class McuService {
       this.socketService.send('status', { [id]: updateMcuDto.status });
       if (updateMcuDto.ip == undefined) return;
       this.socketService.send('ip', { [id]: updateMcuDto.ip });
+      this.socketService.send('detail', { [id]: updateMcuDto.detail });
     });
     return await this.mcuRepo.countBy(updateMcuDto);
   }
@@ -64,13 +66,13 @@ export class McuService {
       console.log(check, 'check');
       if (check) {
         socketData[chip_id] = 'waiting';
-        this.update(chip_id, {
-          status: status.waiting,
-        })
-          .then((data) =>
-            console.log(data, data ? 'waiting success' : 'waiting failed'),
-          )
-          .catch((err) => console.log(err));
+        // this.update(chip_id, {
+        //   status: status.waiting,
+        // })
+        //   .then((data) =>
+        //     console.log(data, data ? 'waiting success' : 'waiting failed'),
+        //   )
+        //   .catch((err) => console.log(err));
 
         if (!checkFirmware.has(firmwareArrInput[chip_id]['upload firmware'])) {
           checkFirmware.set(firmwareArrInput[chip_id]['upload firmware'], {

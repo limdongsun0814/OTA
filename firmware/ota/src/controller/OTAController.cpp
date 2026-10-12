@@ -2,12 +2,13 @@
 // key 위치
 OTAController::OTAController(ICryptoManager& crypto,IHashManager& hash,IUpdateManager& update):crypto(crypto),hash(hash),update(update){}
 
-void OTAController::begin(){
+void OTAController::begin(PubSubClient& client){
+    state.setClient(client);
     state.setState(State::IDLE);
 }
 
 void OTAController::onStatus(uint8_t* payload, size_t length,PubSubClient& client){
-    state.setState(State::RECEIVING,length,"STATUS");
+    
 
     if(32 >= length){
         state.setError(Error::PROTOCOL_LENGTH_MISMATCH);
@@ -22,19 +23,19 @@ void OTAController::onStatus(uint8_t* payload, size_t length,PubSubClient& clien
     update.setContentLn(payload+32,length-32);
     update.setChunkMax(update.getChunkSize(),update.getContentLn());
 
+    state.setState(State::RECEIVING,length,"STATUS");
     checkStatus = true;
-    /*
-        if(debugPort!=nullptr){
-            debugPort->printf("chunkIndex: %d ",update.getChunkIndex());
-            debugPort->printf("contentLength: %d ",update.getContentLn());
-            debugPort->printf("chunkMax: %d \n",update.getChunkMax());
-        }
-    */
+    if(debugPort!=nullptr){
+        debugPort->printf("chunkIndex: %d ",update.getChunkIndex());
+        debugPort->printf("contentLength: %d ",update.getContentLn());
+        debugPort->printf("chunkMax: %d \n",update.getChunkMax());
+    }
     
     OTAController::onPub(client);
 }
 void OTAController::onUpdate(uint8_t* payload, size_t length,PubSubClient& client){
-    state.setState(State::RECEIVING,length,"UPDATE");
+    // state.setState(State::RECEIVING,length,"UPDATE");
+    // payload의 버퍼가 publish와 버퍼가 공유됨 따라서 중간에 publish를 하면 payload가 날라감
 
     if(!checkStatus){
         state.setError(Error::PROTOCOL_INVALID_SEQUENCE);
@@ -64,7 +65,6 @@ void OTAController::onUpdate(uint8_t* payload, size_t length,PubSubClient& clien
 
     if(endPoint){
         hashCheck=hash.verifyHash();
-        state.setState(State::VERIFYING,hashCheck);
     }
     
 
@@ -74,8 +74,10 @@ void OTAController::onUpdate(uint8_t* payload, size_t length,PubSubClient& clien
             return;
         }
 
-        state.setState(State::UPDATING,(update.getChunkIndex()-1)*update.getChunkSize()+length,update.getContentLn());
         update.write(fileData,length);
+        state.setState(State::UPDATING,(update.getChunkIndex()-1)*update.getChunkSize()+length,update.getContentLn());
+        if(endPoint) state.setState(State::VERIFYING,hashCheck);
+
         if(state.hasError()){ 
             return;
         }

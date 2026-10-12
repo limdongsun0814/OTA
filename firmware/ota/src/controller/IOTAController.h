@@ -7,7 +7,7 @@ class IOTAController{
     public:
         virtual ~IOTAController()=default;
 
-        virtual void begin()=0;
+        virtual void begin(PubSubClient& client)=0;
         virtual void onStatus(uint8_t* payload, size_t length,PubSubClient& client)=0;
         virtual void onUpdate(uint8_t* payload, size_t length,PubSubClient& client)=0;
         virtual void onPub(PubSubClient& client)=0;

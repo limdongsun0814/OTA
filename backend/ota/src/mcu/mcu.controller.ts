@@ -14,15 +14,15 @@ export class McuController {
     return await this.mcuService.findAll();
   }
 
-  @Post()
-  async startMcu(@Body() updateMcuDto: UpdateMcuDto) {
-    console.log(updateMcuDto);
-    if (updateMcuDto.chip_id == undefined) return;
-    updateMcuDto.status = status.start;
-    await this.mcuService.update(updateMcuDto.chip_id, updateMcuDto);
+  // @Post()
+  // async startMcu(@Body() updateMcuDto: UpdateMcuDto) {
+  //   console.log(updateMcuDto);
+  //   if (updateMcuDto.chip_id == undefined) return;
+  //   updateMcuDto.status = status.start;
+  //   await this.mcuService.update(updateMcuDto.chip_id, updateMcuDto);
 
-    return { send: 'ok' };
-  }
+  //   return { send: 'ok' };
+  // }
 
   @Put()
   updateMcu(@Body() mcuArrInput: { [key: string]: McuDto }) {

@@ -22,6 +22,9 @@ export class Mcu {
     enum: status,
   })
   status: status;
+  @Column()
+  detail: string;
+
   @UpdateDateColumn()
   last_upload_time: Date;
   @ManyToOne(() => Firmware, { eager: true })

@@ -15,7 +15,7 @@ class OTAController : public IOTAController
 {
     public:
         OTAController(ICryptoManager& crypto,IHashManager& hash,IUpdateManager& update);
-        void begin();
+        void begin(PubSubClient& client);
         void onStatus(uint8_t* payload, size_t length,PubSubClient& client);
         void onUpdate(uint8_t* payload, size_t length,PubSubClient& client);
         void onPub(PubSubClient& client);

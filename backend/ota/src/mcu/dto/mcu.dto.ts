@@ -7,6 +7,7 @@ export class McuDto {
   ip: string;
 
   status: status;
+  detail: string;
   last_upload_time: Date;
   upload_firmware: Firmware;
 }

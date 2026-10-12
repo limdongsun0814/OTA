@@ -84,6 +84,11 @@ onMounted(() => {
       firmware.value[key]["ip"] = data[key];
     }
   });
+  socket.on("detail", (data) => {
+    for (let key in data) {
+      firmware.value[key]["detail"] = data[key];
+    }
+  });
   // socket.on("firmware", (data) => {
   //   console.log("firmware 소켓 도착", data);
   //   firmwareList.value = data;
@@ -114,7 +119,7 @@ import MainModal from "../components/MainModal.vue";
 import UploadBodyModal from "../components/UploadBodyModal.vue";
 import FirmwareRMBodyModal from "@/components/FirmwareRMBodyModal.vue";
 const firmware = ref({});
-const firmwareFile = ref([]);
+const firmwareFile = ref();
 const firmwareList = ref([]);
 const unusedFirmware = ref({});
 const removeFirmwareList = ref({});
@@ -136,7 +141,7 @@ export default defineComponent({
     },
 
     uploadModalForm: {
-      title: "펌웨어 업로드11",
+      title: "펌웨어 업로드",
       "data-bs-target": "uploadModal",
       "data-bs-toggle": "modal",
     },
@@ -212,6 +217,7 @@ export default defineComponent({
     },
     handleFileChange(event) {
       firmwareFile.value = Array.from(event.target.files);
+      console.log(Array.from(event.target.files), "event");
     },
     changeFirmware(event, index) {
       firmware.value[index]["upload firmware"] = event.target.value;

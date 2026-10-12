@@ -3,6 +3,7 @@
 
 #include "../controller/IOTAController.h"
 #include <PubSubClient.h>
+#include "../debug/DebugManager.h"
 
 class MQTTHandler
 {
