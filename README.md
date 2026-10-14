@@ -65,6 +65,9 @@ sequenceDiagram
 | Backend  | NestJS, Socket, Mosquitto, MySQL, TypeORM |
 | Frontend | Vue, Bootstrap, Socket |
 
+## 시현 영상
+[![Video Title](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)
+
 ## 구현 포인트
 
 ### 1. OTA 업데이트 구조 설계
