@@ -30,8 +30,6 @@ OTA/
 
 <div align="center" style="zoom: 80%; width: 80%;">
 ```mermaid
-
-
 sequenceDiagram
     autonumber
     participant Admin as 관리자
