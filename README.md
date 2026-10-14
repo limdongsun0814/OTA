@@ -28,9 +28,9 @@ OTA/
 ## OTA 흐름도
 
 <div align="center" style="zoom: 80%; width: 80%;">
-
+<!-- %%{init: { "theme": "default", "sequence": { "boxMargin": 20, "rightAngles": true, "messageMargin": 50, "messageAlign": "left" } }}%% -->
 ```mermaid
-%%{init: { "theme": "default", "sequence": { "boxMargin": 20, "rightAngles": true, "messageMargin": 50, "messageAlign": "left" } }}%%
+
 
 sequenceDiagram
     autonumber
