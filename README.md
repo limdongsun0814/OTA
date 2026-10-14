@@ -27,6 +27,7 @@ OTA/
 
 ## OTA 흐름도
 <div align="center" style="zoom: 80%; width: 80%;">
+    
 ```mermaid
 sequenceDiagram
     autonumber
