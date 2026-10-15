@@ -1,11 +1,10 @@
 # OTA (Over-The-Air) System
 
-ESP8266 기반 장치의 펌웨어를 무선으로 업데이트하고, 백엔드와 웹 대시보드에서 장치 상태를 관리하는 풀스택 프로젝트입니다. 
+ESP8266 기반 장치의 펌웨어를 무선으로 업데이트하고, 백엔드와 웹 대시보드에서 장치 상태를 관리하는 풀스택 프로젝트입니다.
 
 ## 프로젝트 개요
 
 이 프로젝트는 ESP8266 장치가 네트워크를 통해 서버로부터 펌웨어를 받아 업데이트할 수 있도록 구성하고, 웹 대시보드를 통해 장치와 펌웨어 상태를 실시간으로 확인하고 업데이트할 수 있도록 구현했습니다.
-
 
 ## 주요 기능
 
@@ -24,8 +23,8 @@ OTA/
 └── firmware/ota/    # ESP8266
 ```
 
-
 ## OTA 흐름도
+
 <div align="center" style="zoom: 80%; width: 80%;">
     
 ```mermaid
@@ -37,7 +36,7 @@ sequenceDiagram
 
     Admin->>Backend: HTTP: 펌웨어 업데이트
     Backend-->>MCU: MQTT: 펌웨어 상태 및 정보
-    loop 
+    loop
         MCU-->>Backend: MQTT: 청크 요청
         Backend->>Backend: AES-128-CBC 암호화<br>
         Backend-->>MCU: MQTT: 암호화된 청크
@@ -50,6 +49,7 @@ sequenceDiagram
     MCU-->>Backend: MQTT: 업데이트 상태 전송
     Backend->>Admin: Socket: MCU 상태 갱신
     MCU->>MCU: 재시작<br>
+
 ```
 
 </div>
@@ -65,6 +65,9 @@ sequenceDiagram
 ## 시현 영상
 [![Video Title](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)
 
+
+<video src="https://1drv.ms/v/c/dd3bc808d6b4a8bc/IQD-uGc8giUkR4IZXQdX9JqOAQ-AmOSF7j4mvsVIffB_xmw"></video>
+
 ## 구현 포인트
 
 ### 1. OTA 업데이트 구조 설계
@@ -73,7 +76,7 @@ sequenceDiagram
 
 ### 2. 펌웨어 분할 전송 구조 설계
 
-ESP8266 메모리와 <abbr title="MQTT 클라이언트 네트워크의 버퍼를 늘릴 수도 있지만 늘릴 경우 OTA 시스템 때문에 차지하는 메모리가 커지게 된다.">MQTT 클라이언트 네트워크 버퍼가 제한적이다.</abbr> 따라서 펌웨어를 한 번에 전송하지 않고 펌웨어를 일정 크기로 분할하여 전송하도록 설계했습니다.  
+ESP8266 메모리와 <abbr title="MQTT 클라이언트 네트워크의 버퍼를 늘릴 수도 있지만 늘릴 경우 OTA 시스템 때문에 차지하는 메모리가 커지게 된다.">MQTT 클라이언트 네트워크 버퍼가 제한적이다.</abbr> 따라서 펌웨어를 한 번에 전송하지 않고 펌웨어를 일정 크기로 분할하여 전송하도록 설계했습니다.
 
 ### 3. 실시간 상태 모니터링
 
@@ -90,3 +93,4 @@ Socket를 활용해 MCU 상태, 버전 정보, 배포 상태를 실시간으로 
 - 데이터 분할 전송 구조
 - 실시간 대시보드
 - 무결성 검사
+```
