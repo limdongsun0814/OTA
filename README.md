@@ -67,6 +67,9 @@ sequenceDiagram
 
 [![Video Title123](https://1drv.ms/v/c/dd3bc808d6b4a8bc/IQT-uGc8giUkR4IZXQdX9JqOAa5KMRks8zkMQNJFn9JNPX0?width=1280&height=720)]
 
+[![123123](https://project0254.s3.ap-northeast-2.amazonaws.com/video/025.mp4)]
+
+
 ## 구현 포인트
 
 ### 1. OTA 업데이트 구조 설계
