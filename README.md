@@ -26,12 +26,9 @@ OTA/
 
 
 ## OTA 흐름도
-
 <div align="center" style="zoom: 80%; width: 80%;">
-
+    
 ```mermaid
-%%{init: { "theme": "default", "sequence": { "boxMargin": 20, "rightAngles": true, "messageMargin": 50, "messageAlign": "left" } }}%%
-
 sequenceDiagram
     autonumber
     participant Admin as 관리자
@@ -64,6 +61,9 @@ sequenceDiagram
 | Firmware | PlatformIO, ESP8266, PubSubClient |
 | Backend  | NestJS, Socket, Mosquitto, MySQL, TypeORM |
 | Frontend | Vue, Bootstrap, Socket |
+
+## 시현 영상
+[![Video Title](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)
 
 ## 구현 포인트
 
