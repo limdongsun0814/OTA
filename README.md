@@ -66,7 +66,7 @@ sequenceDiagram
 [![Video Title](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)
 
 
-<video src="https://1drv.ms/v/c/dd3bc808d6b4a8bc/IQD-uGc8giUkR4IZXQdX9JqOAQ-AmOSF7j4mvsVIffB_xmw"></video>
+<video src="[https://1drv.ms/v/c/dd3bc808d6b4a8bc/IQD-uGc8giUkR4IZXQdX9JqOAQ-AmOSF7j4mvsVIffB_xmw](https://onedrive.live.com/photos?photosData=%2Fshare%2FDD3BC808D6B4A8BC%21s3c67b8fe2582472482195d0757f49a8e%3Fithint%3Dvideo%26migratedtospo%3Dtrue&redeem=aHR0cHM6Ly8xZHJ2Lm1zL3YvYy9kZDNiYzgwOGQ2YjRhOGJjL0lRRC11R2M4Z2lVa1I0SVpYUWRYOUpxT0FRLUFtT1NGN2o0bXZzVklmZkJfeG13)"></video>
 
 ## 구현 포인트
 
