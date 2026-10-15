@@ -39,7 +39,7 @@ void setup() {
 void loop() {
     network.loop();
     unsigned long now = millis();
-    if(now-lastBlink>1000){
+    if(now-lastBlink>200){
         ledState=!ledState;
         lastBlink=now;
         digitalWrite(LED_BUILTIN,ledState?LOW:HIGH);

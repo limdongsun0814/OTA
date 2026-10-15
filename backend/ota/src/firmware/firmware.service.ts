@@ -88,7 +88,8 @@ export class FirmwareService {
         '-' +
         String(now.getMinutes()).padStart(2, '0') +
         '-' +
-        String(now.getSeconds()).padStart(2, '0');
+        String(now.getSeconds()).padStart(2, '0') +
+        '_';
 
       console.log(formatted);
       console.log('Request:', file.originalname, file.size, extension);

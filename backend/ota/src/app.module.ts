@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { FirmwareModule } from './firmware/firmware.module';
 import { EmpModule } from './emp/emp.module';
@@ -63,9 +61,8 @@ import { SocketModule } from './socket/socket.module';
     StateModule,
     SocketModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
-    AppService,
     SocketGateway,
     {
       provide: 'KEY',
