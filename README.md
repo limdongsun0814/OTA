@@ -63,9 +63,11 @@ sequenceDiagram
 | Frontend | Vue, Bootstrap, Socket |
 
 ## 시현 영상
-[![Video Title](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)
+[![Video Title](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)]
 
+[![Video Title](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)](https://github.com/user-attachments/assets/3af824c4-dd78-4224-aab3-12593e04cf97)]
 
+[![Video Title](https://1drv.ms/v/c/dd3bc808d6b4a8bc/IQT-uGc8giUkR4IZXQdX9JqOAa5KMRks8zkMQNJFn9JNPX0?width=1280&height=720)]
 
 <iframe src="https://1drv.ms/v/c/dd3bc808d6b4a8bc/IQT-uGc8giUkR4IZXQdX9JqOAa5KMRks8zkMQNJFn9JNPX0?width=1280&height=720" width="640" height="360" frameborder="0" scrolling="no" allowfullscreen></iframe>
 
