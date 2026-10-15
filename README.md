@@ -67,10 +67,6 @@ sequenceDiagram
 
 [![Video Title123](https://1drv.ms/v/c/dd3bc808d6b4a8bc/IQT-uGc8giUkR4IZXQdX9JqOAa5KMRks8zkMQNJFn9JNPX0?width=1280&height=720)]
 
-<iframe src="https://1drv.ms/v/c/dd3bc808d6b4a8bc/IQT-uGc8giUkR4IZXQdX9JqOAa5KMRks8zkMQNJFn9JNPX0?width=1280&height=720" width="640" height="360" frameborder="0" scrolling="no" allowfullscreen></iframe>
-
-
-
 ## 구현 포인트
 
 ### 1. OTA 업데이트 구조 설계
