@@ -64,11 +64,8 @@ sequenceDiagram
 
 ## OTA 시현 영상
 
-[![OTA](https://github.com/user-attachments/assets/c5be63f0-3240-453b-8474-6a4e1d8cf8d2)(https://github.com/user-attachments/assets/c5be63f0-3240-453b-8474-6a4e1d8cf8d2)]
+[![OTA](https://github.com/user-attachments/assets/c5be63f0-3240-453b-8474-6a4e1d8cf8d2)]
 
-<a href="https://1drv.ms/v/c/dd3bc808d6b4a8bc/IQT-uGc8giUkR4IZXQdX9JqOAa5KMRks8zkMQNJFn9JNPX0?width=1280&height=720">
-   Video Link
-</a>
 
 ## 구현 포인트
 
