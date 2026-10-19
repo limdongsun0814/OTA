@@ -64,7 +64,7 @@ sequenceDiagram
 
 ## OTA 시현 영상
 
-[![OTA](https://github.com/user-attachments/assets/c5be63f0-3240-453b-8474-6a4e1d8cf8d2)]
+![OTA](https://github.com/user-attachments/assets/c5be63f0-3240-453b-8474-6a4e1d8cf8d2)
 
 
 ## 구현 포인트
